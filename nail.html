@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Agenda Manicure">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <title>Agenda Manicure Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: #1a1a2e;
+        }
+
+        /* Cores principais */
+        .bg-primary { background: #E91E63; }
+        .text-primary { color: #E91E63; }
+        .border-primary { border-color: #E91E63; }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-nav {
+            padding: 16px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: #4b5563;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: #fef2f6;
+            color: #E91E63;
+        }
+
+        .nav-item.active {
+            background: #fef2f6;
+            color: #E91E63;
+            border-right: 3px solid #E91E63;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #E91E63;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #D81B60;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #E91E63;
+            color: #E91E63;
+        }
+
+        .btn-outline:hover {
+            background: #E91E63;
+            color: white;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .data-table th {
+            background: #f9fafb;
+            font-weight: 600;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fed7aa; color: #9b2c1d; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Calendar */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .calendar-day.available:hover {
+            background: #E91E63;
+            color: white;
+        }
+
+        .calendar-day.selected {
+            background: #E91E63;
+            color: white;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #E91E63;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            z-index: 1100;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #E91E63;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-280px);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        /* PWA */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // ============================================
+        // ESTADO GLOBAL
+        // ============================================
+        let currentView = 'booking'; // booking, admin
+        let currentAdminTab = 'dashboard';
+        let professional = null;
+        let authToken = null;
+        let currentUser = null;
+        
+        // Estado do agendamento
+        let bookingStep = 'service';
+        let selectedService = null;
+        let selectedDate = null;
+        let selectedSlot = null;
+        let clientData = null;
+        let bookingId = null;
+        let availableSlots = [];
+        let currentMonth = new Date();
+        
+        // Estado administrativo
+        let services = [];
+        let clients = [];
+        let products = [];
+        let messages = [];
+        let appointments = [];
+        let dashboardData = null;
+        let charts = {};
+        
+        // ============================================
+        // UTILITÁRIOS
+        // ============================================
+        const showToast = (message, type = 'success') => {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = type === 'error' ? '#EF4444' : '#10B981';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
+        
+        const formatPrice = (price) => {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(price);
+        };
+        
+        const formatDate = (date) => {
+            if (!date) return '';
+            return new Date(date).toLocaleDateString('pt-BR');
+        };
+        
+        const formatDateTime = (date) => {
+            if (!date) return '';
+            const d = new Date(date);
+            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        };
+        
+        // ============================================
+        // API CALLS
+        // ============================================
+        async function apiCall(url, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            if (authToken) {
+                headers['Authorization'] = authToken;
+            }
+            
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
+            
+            if (response.status === 401) {
+                logout();
+                showToast('Sessão expirada. Faça login novamente.', 'error');
+                renderApp();
+                return null;
+            }
+            
+            return await response.json();
+        }
+        
+        async function loadProfessional(slug) {
+            const data = await apiCall(`/api/professional/${slug}`);
+            if (!data.error) return data;
+            return null;
+        }
+        
+        async function loadAvailableSlots(professionalId, date, duration) {
+            const data = await apiCall(`/api/available-slots?professional_id=${professionalId}&date=${date}&duration=${duration}`);
+            return data.slots || [];
+        }
+        
+        async function createAppointment(data) {
+            return await apiCall('/api/appointments', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+        }
+        
+        async function adminLogin(email, password) {
+            return await apiCall('/api/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+        }
+        
+        async function loadDashboard() {
+            if (!currentUser) return;
+            dashboardData = await apiCall(`/api/admin/dashboard/${currentUser.professional_id}`);
+            renderAdminContent();
+        }
+        
+        async function loadServices() {
+            if (!currentUser) return;
+            services = await apiCall(`/api/admin/services/${currentUser.professional_id}`);
+            renderAdminContent();
+        }
+        
+        async function loadClients() {
+            if (!currentUser) return;
+            clients = await apiCall(`/api/admin/clients/${currentUser.professional_id}`);
+            renderAdminContent();
+        }
+        
+        async function loadProducts() {
+            if (!currentUser) return;
+            products = await apiCall(`/api/admin/products/${currentUser.professional_id}`);
+            renderAdminContent();
+        }
+        
+        async function loadMessages() {
+            if (!currentUser) return;
+            messages = await apiCall(`/api/admin/messages/${currentUser.professional_id}`);
+            renderAdminContent();
+        }
+        
+        async function loadAppointments(date) {
+            if (!currentUser) return;
+            appointments = await apiCall(`/api/admin/appointments/${currentUser.professional_id}?date=${date}`);
+            renderAdminContent();
+        }
+        
+        async function updateAppointmentStatus(appointmentId, status, notes) {
+            return await apiCall(`/api/admin/appointment/${appointmentId}/status`, {
+                method: 'PUT',
+                body: JSON.stringify({ status, notes })
+            });
+        }
+        
+        async function createService(serviceData) {
+            return await apiCall('/api/admin/service', {
+                method: 'POST',
+                body: JSON.stringify(serviceData)
+            });
+        }
+        
+        async function updateService(serviceId, serviceData) {
+            return await apiCall(`/api/admin/service/${serviceId}`, {
+                method: 'PUT',
+                body: JSON.stringify(serviceData)
+            });
+        }
+        
+        async function deleteService(serviceId) {
+            return await apiCall(`/api/admin/service/${serviceId}`, {
+                method: 'DELETE'
+            });
+        }
+        
+        // ============================================
+        // AUTH
+        // ============================================
+        function login(email, password) {
+            adminLogin(email, password).then(result => {
+                if (result.success) {
+                    authToken = result.token || 'authenticated';
+                    currentUser = {
+                        professional_id: result.professional_id,
+                        name: result.name,
+                        business_name: result.business_name
+                    };
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    currentView = 'admin';
+                    currentAdminTab = 'dashboard';
+                    loadDashboard();
+                    showToast('Login realizado com sucesso!');
+                } else {
+                    showToast(result.error || 'Erro ao fazer login', 'error');
+                }
+            });
+        }
+        
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            currentView = 'booking';
+            renderApp();
+        }
+        
+        // ============================================
+        // AGENDAMENTO
+        // ============================================
+        function selectService(service) {
+            selectedService = service;
+            bookingStep = 'datetime';
+            renderBookingContent();
+        }
+        
+        function selectSlot(slot) {
+            selectedSlot = slot;
+            renderBookingContent();
+        }
+        
+        function confirmDateTime() {
+            bookingStep = 'client';
+            renderBookingContent();
+        }
+        
+        async function submitClientForm(formData) {
+            if (!formData.fullName || !formData.phone) {
+                showToast('Preencha todos os campos obrigatórios', 'error');
+                return;
+            }
+            
+            const dateTime = new Date(selectedDate + 'T' + selectedSlot + ':00');
+            const whatsappMessage = `🆕 NOVO AGENDAMENTO 🆕\n\n👤 Cliente: ${formData.fullName}\n📞 Telefone: ${formData.phone}\n💅 Serviço: ${selectedService.name}\n💰 Valor: ${formatPrice(selectedService.price)}\n📅 Data: ${formatDate(selectedDate)} às ${selectedSlot}\n\n_Agendado pelo link da bio_`;
+            
+            const result = await createAppointment({
+                service_id: selectedService.id,
+                professional_id: professional.id,
+                professional_phone: professional.whatsapp || professional.phone,
+                start_time: dateTime.toISOString(),
+                duration: selectedService.duration_minutes,
+                client: formData,
+                whatsapp_message: encodeURIComponent(whatsappMessage)
+            });
+            
+            if (result.success) {
+                bookingId = result.appointment_id;
+                bookingStep = 'confirmation';
+                renderBookingContent();
+                
+                if (result.whatsapp_link) {
+                    setTimeout(() => window.open(result.whatsapp_link, '_blank'), 500);
+                }
+                showToast('Agendamento realizado com sucesso!');
+            } else {
+                showToast(result.error || 'Erro ao agendar', 'error');
+            }
+        }
+        
+        function resetBooking() {
+            bookingStep = 'service';
+            selectedService = null;
+            selectedDate = null;
+            selectedSlot = null;
+            clientData = null;
+            bookingId = null;
+            availableSlots = [];
+            renderBookingContent();
+        }
+        
+        function goBack() {
+            const steps = ['service', 'datetime', 'client', 'confirmation'];
+            const currentIndex = steps.indexOf(bookingStep);
+            if (currentIndex > 0) {
+                bookingStep = steps[currentIndex - 1];
+                renderBookingContent();
+            }
+        }
+        
+        // ============================================
+        // RENDER PRINCIPAL
+        // ============================================
+        function renderApp() {
+            const app = document.getElementById('app');
+            const slug = window.location.pathname === '/' ? 'stebarbosa' : window.location.pathname.slice(1);
+            
+            // Verificar se está na área admin
+            if (window.location.pathname === '/admin' || currentView === 'admin') {
+                renderAdmin();
+                return;
+            }
+            
+            // Carregar profissional se necessário
+            if (!professional) {
+                loadProfessional(slug).then(data => {
+                    if (data) {
+                        professional = data;
+                        renderBooking();
+                    } else {
+                        app.innerHTML = `
+                            <div class="container text-center py-12">
+                                <h2 class="text-2xl font-bold mb-4">Página não encontrada</h2>
+                                <p class="text-gray-500 mb-6">O link que você acessou não existe.</p>
+                                <button onclick="location.href='/stebarbosa'" class="btn btn-primary">Voltar para exemplo</button>
+                            </div>
+                        `;
+                    }
+                });
+                return;
+            }
+            
+            renderBooking();
+        }
+        
+        function renderBooking() {
+            const app = document.getElementById('app');
+            
+            app.innerHTML = `
+                <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+                    <div class="card mb-6">
+                        <div class="bg-gradient-to-r from-pink-400 to-pink-600 h-32"></div>
+                        <div class="px-6 pb-6">
+                            <div class="profile-photo" style="width: 100px; height: 100px; border-radius: 50%; background: #E91E63; display: flex; align-items: center; justify-content: center; font-size: 48px; color: white; margin-top: -50px; margin-left: 24px;">
+                                ${professional.business_name?.charAt(0) || professional.name.charAt(0)}
+                            </div>
+                            <h1 class="text-2xl font-bold mt-4">${professional.business_name || professional.name}</h1>
+                            ${professional.instagram ? `<p class="text-gray-500">@${professional.instagram.replace('@', '')}</p>` : ''}
+                            ${professional.bio_description ? `<p class="text-gray-600 mt-3">${professional.bio_description}</p>` : ''}
+                            
+                            <div class="flex gap-3 mt-4 flex-wrap">
+                                ${professional.instagram ? `<a href="https://instagram.com/${professional.instagram.replace('@', '')}" target="_blank" class="btn btn-outline">📷 Instagram</a>` : ''}
+                                ${professional.whatsapp ? `<a href="https://wa.me/${professional.whatsapp}" target="_blank" class="btn btn-primary">💬 WhatsApp</a>` : ''}
+                                ${professional.address ? `<div class="btn btn-outline">📍 ${professional.address}</div>` : ''}
+                                <button onclick="window.location.href='/admin'" class="btn btn-outline">🔐 Área Admin</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6">
+                        <div id="booking-content"></div>
+                    </div>
+                    
+                    <footer class="text-center text-sm text-gray-500 mt-8">
+                        <p>© ${new Date().getFullYear()} ${professional.business_name || professional.name}</p>
+                    </footer>
+                </div>
+            `;
+            
+            renderBookingContent();
+        }
+        
+        function renderBookingContent() {
+            const container = document.getElementById('booking-content');
+            if (!container) return;
+            
+            if (bookingStep === 'service') {
+                renderServiceSelector(container);
+            } else if (bookingStep === 'datetime') {
+                renderDateTimePicker(container);
+            } else if (bookingStep === 'client') {
+                renderClientForm(container);
+            } else if (bookingStep === 'confirmation') {
+                renderConfirmation(container);
+            }
+        }
+        
+        function renderServiceSelector(container) {
+            const categories = ['all', ...new Set(professional.services.map(s => s.category))];
+            
+            container.innerHTML = `
+                <h2 class="text-2xl font-bold mb-2">Escolha um serviço</h2>
+                <p class="text-gray-500 mb-6">Selecione o serviço que deseja agendar</p>
+                
+                <div class="mb-4">
+                    <input type="text" id="searchService" placeholder="Buscar serviço..." class="w-full p-3 border rounded-xl">
+                </div>
+                
+                <div class="flex gap-2 overflow-x-auto pb-4 mb-4" id="categories"></div>
+                <div class="services-grid" id="servicesList"></div>
+            `;
+            
+            // Render categories
+            const categoriesDiv = document.getElementById('categories');
+            categoriesDiv.innerHTML = categories.map(cat => `
+                <button class="category-btn px-4 py-2 rounded-full ${window.selectedCategory === cat ? 'bg-pink-500 text-white' : 'bg-gray-100'}" data-category="${cat}">
+                    ${cat === 'all' ? 'Todos' : cat}
+                </button>
+            `).join('');
+            
+            const renderServices = () => {
+                const searchTerm = document.getElementById('searchService')?.value || '';
+                const selectedCat = window.selectedCategory || 'all';
+                const filtered = professional.services.filter(s => {
+                    const matchSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
+                    const matchCategory = selectedCat === 'all' || s.category === selectedCat;
+                    return matchSearch && matchCategory;
+                });
+                
+                const servicesDiv = document.getElementById('servicesList');
+                servicesDiv.innerHTML = filtered.map(service => `
+                    <div onclick="selectService(${JSON.stringify(service).replace(/"/g, '&quot;')})" class="service-card" style="display: flex; justify-content: space-between; padding: 16px; border: 1px solid #e5e7eb; border-radius: 16px; cursor: pointer;">
+                        <div>
+                            <h3 class="font-semibold">${service.name}</h3>
+                            ${service.description ? `<p class="text-sm text-gray-500">${service.description}</p>` : ''}
+                            <div class="text-sm text-gray-500 mt-1">⏱️ ${service.duration_minutes} min</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-pink-600">${formatPrice(service.price)}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                if (filtered.length === 0) {
+                    servicesDiv.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum serviço encontrado</p>';
+                }
+            };
+            
+            document.getElementById('searchService')?.addEventListener('input', renderServices);
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    window.selectedCategory = btn.dataset.category;
+                    renderServices();
+                });
+            });
+            
+            renderServices();
+        }
+        
+        async function renderDateTimePicker(container) {
+            const days = [];
+            const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+            const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+            for (let d = startOfMonth; d <= endOfMonth; d.setDate(d.getDate() + 1)) {
+                days.push(new Date(d));
+            }
+            
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            
+            container.innerHTML = `
+                <button onclick="goBack()" class="btn btn-outline mb-6">← Voltar</button>
+                <h2 class="text-2xl font-bold mb-2">Escolha data e horário</h2>
+                <p class="text-gray-500 mb-6">${selectedService.name} • ${selectedService.duration_minutes} min</p>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold">${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}</h3>
+                            <div class="flex gap-2">
+                                <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg">←</button>
+                                <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-lg">→</button>
+                            </div>
+                        </div>
+                        <div class="calendar-grid">
+                            ${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => `<div class="text-center text-sm text-gray-500 py-2">${d}</div>`).join('')}
+                            ${Array(days[0].getDay()).fill('<div></div>').join('')}
+                            ${days.map(day => {
+                                const isAvailable = day >= new Date(new Date().setHours(0,0,0,0));
+                                const isSelected = selectedDate === day.toISOString().split('T')[0];
+                                return `<div onclick="${isAvailable ? `selectDate('${day.toISOString()}')` : ''}" class="calendar-day ${isAvailable ? 'available' : 'disabled'} ${isSelected ? 'selected' : ''}">${day.getDate()}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-4">Horários disponíveis</h3>
+                        <div id="slotsContainer" class="slots-grid"></div>
+                    </div>
+                </div>
+                
+                <div id="continueBtn"></div>
+            `;
+            
+            window.selectDate = async (date) => {
+                selectedDate = date.split('T')[0];
+                const slots = await loadAvailableSlots(professional.id, selectedDate, selectedService.duration_minutes);
+                availableSlots = slots;
+                
+                const slotsContainer = document.getElementById('slotsContainer');
+                if (slots.length > 0) {
+                    slotsContainer.innerHTML = slots.map(slot => `
+                        <div onclick="selectSlot('${slot}')" class="slot-btn ${selectedSlot === slot ? 'selected' : ''}" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 12px; text-align: center; cursor: pointer;">
+                            ${slot}
+                        </div>
+                    `).join('');
+                } else {
+                    slotsContainer.innerHTML = '<p class="text-center text-gray-500 col-span-2">Nenhum horário disponível</p>';
+                }
+            };
+            
+            window.changeMonth = (delta) => {
+                currentMonth.setMonth(currentMonth.getMonth() + delta);
+                renderDateTimePicker(container);
+            };
+            
+            const continueBtn = document.getElementById('continueBtn');
+            if (selectedSlot) {
+                continueBtn.innerHTML = `<button onclick="confirmDateTime()" class="btn btn-primary w-full mt-6 py-3">Continuar</button>`;
+            }
+        }
+        
+        function renderClientForm(container) {
+            container.innerHTML = `
+                <button onclick="goBack()" class="btn btn-outline mb-6">← Voltar</button>
+                <h2 class="text-2xl font-bold mb-2">Seus dados</h2>
+                <p class="text-gray-500 mb-6">Preencha seus dados para confirmar o agendamento</p>
+                
+                <div class="bg-pink-50 rounded-xl p-4 mb-6">
+                    <div class="flex justify-between mb-3">
+                        <div><p class="text-sm text-pink-600">Serviço</p><p class="font-semibold">${selectedService.name}</p></div>
+                        <p class="text-lg font-bold text-pink-600">${formatPrice(selectedService.price)}</p>
+                    </div>
+                    <div class="flex gap-4 text-sm">
+                        <div><p class="text-gray-500">Data</p><p class="font-medium">${formatDate(selectedDate)}</p></div>
+                        <div><p class="text-gray-500">Horário</p><p class="font-medium">${selectedSlot}</p></div>
+                    </div>
+                </div>
+                
+                <form id="clientForm">
+                    <div class="form-group"><label>Nome completo *</label><input type="text" id="fullName" required></div>
+                    <div class="form-group"><label>Telefone / WhatsApp *</label><input type="tel" id="phone" required placeholder="(11) 99999-9999"></div>
+                    <div class="form-group"><label>E-mail</label><input type="email" id="email"></div>
+                    <div class="form-group"><label>Observações</label><textarea id="notes" rows="3"></textarea></div>
+                    <div class="flex items-center gap-2 mb-4"><input type="checkbox" id="whatsappOptin" checked><label>Quero receber confirmações por WhatsApp</label></div>
+                    <button type="submit" class="btn btn-primary w-full py-3">Confirmar Agendamento</button>
+                </form>
+            `;
+            
+            document.getElementById('clientForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitClientForm({
+                    fullName: document.getElementById('fullName').value,
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value,
+                    notes: document.getElementById('notes').value,
+                    whatsappOptin: document.getElementById('whatsappOptin').checked
+                });
+            });
+        }
+        
+        function renderConfirmation(container) {
+            container.innerHTML = `
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">Agendamento Confirmado!</h2>
+                    <p class="text-gray-500 mb-6">Seu horário foi reservado com sucesso</p>
+                    <div class="bg-gray-50 rounded-xl p-4 mb-6"><p class="text-sm text-gray-500">Código do agendamento</p><p class="text-2xl font-mono font-bold text-pink-600">${bookingId.slice(0, 8)}</p></div>
+                    <div class="bg-white border rounded-xl p-6 mb-6 text-left">
+                        <h3 class="font-semibold mb-4">Detalhes do agendamento</h3>
+                        <div class="space-y-3">
+                            <div><span class="text-gray-500">Serviço:</span> ${selectedService.name}</div>
+                            <div><span class="text-gray-500">Data:</span> ${formatDate(selectedDate)}</div>
+                            <div><span class="text-gray-500">Horário:</span> ${selectedSlot}</div>
+                            <div><span class="text-gray-500">Valor:</span> ${formatPrice(selectedService.price)}</div>
+                        </div>
+                    </div>
+                    <button onclick="resetBooking()" class="btn btn-primary w-full">← Voltar para página inicial</button>
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // ÁREA ADMINISTRATIVA
+        // ============================================
+        function renderAdmin() {
+            const app = document.getElementById('app');
+            
+            if (!currentUser) {
+                renderLoginForm(app);
+                return;
+            }
+            
+            app.innerHTML = `
+                <div class="app-container">
+                    <div class="sidebar" id="sidebar">
+                        <div class="sidebar-header">
+                            <h2 class="text-xl font-bold text-pink-600">Agenda Manicure</h2>
+                            <p class="text-sm text-gray-500">${currentUser.business_name || currentUser.name}</p>
+                        </div>
+                        <div class="sidebar-nav">
+                            ${getNavItems()}
+                        </div>
+                        <div class="p-4 border-t mt-auto">
+                            <button onclick="logout()" class="btn btn-outline w-full">Sair</button>
+                        </div>
+                    </div>
+                    <div class="main-content">
+                        <div class="top-bar">
+                            <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+                            <h1 class="text-xl font-semibold">${getAdminTitle()}</h1>
+                        </div>
+                        <div class="p-6" id="admin-content"></div>
+                    </div>
+                </div>
+            `;
+            
+            renderAdminContent();
+        }
+        
+        function getNavItems() {
+            return `
+                <div class="nav-item ${currentAdminTab === 'dashboard' ? 'active' : ''}" onclick="switchAdminTab('dashboard')">📊 Dashboard</div>
+                <div class="nav-item ${currentAdminTab === 'agenda' ? 'active' : ''}" onclick="switchAdminTab('agenda')">📅 Agenda</div>
+                <div class="nav-item ${currentAdminTab === 'clientes' ? 'active' : ''}" onclick="switchAdminTab('clientes')">👥 Clientes</div>
+                <div class="nav-item ${currentAdminTab === 'servicos' ? 'active' : ''}" onclick="switchAdminTab('servicos')">💅 Serviços</div>
+                <div class="nav-item ${currentAdminTab === 'produtos' ? 'active' : ''}" onclick="switchAdminTab('produtos')">🛍️ Produtos</div>
+                <div class="nav-item ${currentAdminTab === 'financeiro' ? 'active' : ''}" onclick="switchAdminTab('financeiro')">💰 Financeiro</div>
+                <div class="nav-item ${currentAdminTab === 'mensagens' ? 'active' : ''}" onclick="switchAdminTab('mensagens')">💬 Mensagens</div>
+                <div class="nav-item ${currentAdminTab === 'configuracoes' ? 'active' : ''}" onclick="switchAdminTab('configuracoes')">⚙️ Configurações</div>
+            `;
+        }
+        
+        function getAdminTitle() {
+            const titles = {
+                dashboard: 'Dashboard',
+                agenda: 'Agenda',
+                clientes: 'Clientes',
+                servicos: 'Serviços',
+                produtos: 'Produtos',
+                financeiro: 'Financeiro',
+                mensagens: 'Mensagens',
+                configuracoes: 'Configurações'
+            };
+            return titles[currentAdminTab] || 'Dashboard';
+        }
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        }
+        
+        window.switchAdminTab = (tab) => {
+            currentAdminTab = tab;
+            
+            if (tab === 'dashboard') loadDashboard();
+            if (tab === 'agenda') loadAppointments(new Date().toISOString().split('T')[0]);
+            if (tab === 'clientes') loadClients();
+            if (tab === 'servicos') loadServices();
+            if (tab === 'produtos') loadProducts();
+            if (tab === 'mensagens') loadMessages();
+            if (tab === 'financeiro') loadDashboard();
+            
+            renderAdmin();
+        };
+        
+        function renderLoginForm(container) {
+            container.innerHTML = `
+                <div class="container" style="max-width: 400px; margin: 100px auto;">
+                    <div class="card p-6">
+                        <h2 class="text-2xl font-bold text-center mb-6">Área Administrativa</h2>
+                        <form id="loginForm">
+                            <div class="form-group"><label>Email</label><input type="email" id="email" required></div>
+                            <div class="form-group"><label>Senha</label><input type="password" id="password" required></div>
+                            <button type="submit" class="btn btn-primary w-full">Entrar</button>
+                        </form>
+                        <p class="text-center text-sm text-gray-500 mt-4">
+                            Demo: ste@naildesigner.com / admin123
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                login(
+                    document.getElementById('email').value,
+                    document.getElementById('password').value
+                );
+            });
+        }
+        
+        function renderAdminContent() {
+            const container = document.getElementById('admin-content');
+            if (!container) return;
+            
+            if (currentAdminTab === 'dashboard') renderDashboard(container);
+            else if (currentAdminTab === 'agenda') renderAgenda(container);
+            else if (currentAdminTab === 'clientes') renderClientes(container);
+            else if (currentAdminTab === 'servicos') renderServicos(container);
+            else if (currentAdminTab === 'produtos') renderProdutos(container);
+            else if (currentAdminTab === 'financeiro') renderFinanceiro(container);
+            else if (currentAdminTab === 'mensagens') renderMensagens(container);
+            else if (currentAdminTab === 'configuracoes') renderConfiguracoes(container);
+        }
+        
+        function renderDashboard(container) {
+            if (!dashboardData) {
+                container.innerHTML = '<div class="loading"></div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px;">
+                    <div class="stat-card"><h3 class="text-gray-500 text-sm">Receita Total</h3><p class="text-2xl font-bold">${formatPrice(dashboardData.total_revenue || 0)}</p></div>
+                    <div class="stat-card"><h3 class="text-gray-500 text-sm">Despesas</h3><p class="text-2xl font-bold">${formatPrice(dashboardData.total_expenses || 0)}</p></div>
+                    <div class="stat-card"><h3 class="text-gray-500 text-sm">Lucro Líquido</h3><p class="text-2xl font-bold">${formatPrice(dashboardData.net_profit || 0)}</p></div>
+                    <div class="stat-card"><h3 class="text-gray-500 text-sm">Atendimentos</h3><p class="text-2xl font-bold">${dashboardData.total_appointments || 0}</p></div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="card p-4"><h3 class="font-semibold mb-4">Top 5 Serviços</h3><div id="topServicesChart" style="height: 300px;"></div></div>
+                    <div class="card p-4"><h3 class="font-semibold mb-4">Formas de Pagamento</h3><div id="paymentChart" style="height: 300px;"></div></div>
+                </div>
+                
+                <div class="card p-4 mb-6"><h3 class="font-semibold mb-4">Aniversariantes do Mês</h3><div id="birthdaysList"></div></div>
+            `;
+            
+            // Top Services Chart
+            if (dashboardData.top_services && dashboardData.top_services.length > 0) {
+                const ctx = document.createElement('canvas');
+                document.getElementById('topServicesChart').appendChild(ctx);
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dashboardData.top_services.map(s => s.name),
+                        datasets: [{
+                            label: 'Receita (R$)',
+                            data: dashboardData.top_services.map(s => s.total_revenue),
+                            backgroundColor: '#E91E63'
+                        }]
+                    }
+                });
+            }
+            
+            // Payment Methods Chart
+            if (dashboardData.payment_methods && dashboardData.payment_methods.length > 0) {
+                const ctx = document.createElement('canvas');
+                document.getElementById('paymentChart').appendChild(ctx);
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: dashboardData.payment_methods.map(p => p.payment_method),
+                        datasets: [{
+                            data: dashboardData.payment_methods.map(p => p.total),
+                            backgroundColor: ['#E91E63', '#FF4081', '#F50057', '#FF80AB']
+                        }]
+                    }
+                });
+            }
+            
+            // Birthdays
+            const birthdaysDiv = document.getElementById('birthdaysList');
+            if (dashboardData.birthday_clients && dashboardData.birthday_clients.length > 0) {
+                birthdaysDiv.innerHTML = dashboardData.birthday_clients.map(c => `
+                    <div class="flex justify-between items-center p-3 border-b">
+                        <div><span class="font-medium">${c.full_name}</span><span class="text-sm text-gray-500 ml-2">${c.birthday}</span></div>
+                        <a href="https://wa.me/${c.phone?.replace(/\D/g, '')}" target="_blank" class="btn btn-sm btn-outline">💬 WhatsApp</a>
+                    </div>
+                `).join('');
+            } else {
+                birthdaysDiv.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum aniversariante este mês</p>';
+            }
+        }
+        
+        function renderAgenda(container) {
+            const today = new Date().toISOString().split('T')[0];
+            
+            container.innerHTML = `
+                <div class="card p-4 mb-4">
+                    <div class="flex gap-4 items-center">
+                        <input type="date" id="datePicker" value="${today}" class="p-2 border rounded">
+                        <button onclick="loadAppointments(document.getElementById('datePicker').value)" class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
+                <div class="card overflow-x-auto">
+                    <table class="data-table">
+                        <thead><tr><th>Horário</th><th>Cliente</th><th>Serviço</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="appointmentsList"></tbody>
+                    </table>
+                </div>
+            `;
+            
+            const tbody = document.getElementById('appointmentsList');
+            if (appointments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8">Nenhum agendamento para esta data</td></tr>';
+            } else {
+                tbody.innerHTML = appointments.map(apt => `
+                    <tr>
+                        <td>${new Date(apt.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td>${apt.client_name}</td>
+                        <td>${apt.service_name}</td>
+                        <td>${formatPrice(apt.price)}</td>
+                        <td><span class="badge badge-${apt.status === 'confirmed' ? 'success' : apt.status === 'pending' ? 'warning' : 'info'}">${getStatusText(apt.status)}</span></td>
+                        <td>
+                            <select onchange="updateAppointmentStatus('${apt.id}', this.value)" class="p-1 border rounded text-sm">
+                                <option value="pending" ${apt.status === 'pending' ? 'selected' : ''}>Pendente</option>
+                                <option value="confirmed" ${apt.status === 'confirmed' ? 'selected' : ''}>Confirmado</option>
+                                <option value="in_progress" ${apt.status === 'in_progress' ? 'selected' : ''}>Em andamento</option>
+                                <option value="completed" ${apt.status === 'completed' ? 'selected' : ''}>Concluído</option>
+                                <option value="cancelled" ${apt.status === 'cancelled' ? 'selected' : ''}>Cancelado</option>
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            window.updateAppointmentStatus = async (id, status) => {
+                await updateAppointmentStatus(id, status);
+                await loadAppointments(document.getElementById('datePicker').value);
+                showToast('Status atualizado com sucesso!');
+            };
+        }
+        
+        function renderClientes(container) {
+            container.innerHTML = `
+                <div class="card p-4 mb-4">
+                    <div class="flex gap-4">
+                        <input type="text" id="searchClient" placeholder="Buscar cliente..." class="flex-1 p-2 border rounded">
+                        <button onclick="loadClients()" class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
+                <div class="card overflow-x-auto">
+                    <table class="data-table">
+                        <thead><tr><th>Nome</th><th>Telefone</th><th>Visitas</th><th>Gasto Total</th><th>Última Visita</th><th>Ações</th></tr></thead>
+                        <tbody id="clientsList"></tbody>
+                    </table>
+                </div>
+            `;
+            
+            const tbody = document.getElementById('clientsList');
+            if (clients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8">Nenhum cliente cadastrado</td></tr>';
+            } else {
+                tbody.innerHTML = clients.map(c => `
+                    <tr>
+                        <td>${c.full_name}</td>
+                        <td>${c.phone}</td>
+                        <td>${c.total_visits || 0}</td>
+                        <td>${formatPrice(c.total_spent || 0)}</td>
+                        <td>${c.last_visit ? formatDate(c.last_visit) : '-'}</td>
+                        <td><a href="https://wa.me/${c.phone?.replace(/\D/g, '')}" target="_blank" class="btn btn-sm btn-outline">💬</a></td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        function renderServicos(container) {
+            container.innerHTML = `
+                <div class="mb-4"><button onclick="showServiceModal()" class="btn btn-primary">+ Novo Serviço</button></div>
+                <div class="card overflow-x-auto">
+                    <table class="data-table">
+                        <thead><tr><th>Nome</th><th>Categoria</th><th>Duração</th><th>Preço</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="servicesList"></tbody>
+                    </table>
+                </div>
+            `;
+            
+            const tbody = document.getElementById('servicesList');
+            if (services.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8">Nenhum serviço cadastrado</td></tr>';
+            } else {
+                tbody.innerHTML = services.map(s => `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.category || '-'}</td>
+                        <td>${s.duration_minutes} min</td>
+                        <td>${formatPrice(s.price)}</td>
+                        <td><span class="badge badge-${s.is_active ? 'success' : 'danger'}">${s.is_active ? 'Ativo' : 'Inativo'}</span></td>
+                        <td><button onclick="editService('${s.id}')" class="btn btn-sm btn-outline">✏️</button></td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        function renderProdutos(container) {
+            container.innerHTML = `
+                <div class="mb-4"><button onclick="showProductModal()" class="btn btn-primary">+ Novo Produto</button></div>
+                <div class="card overflow-x-auto">
+                    <table class="data-table">
+                        <thead><tr><th>Nome</th><th>SKU</th><th>Preço Compra</th><th>Preço Venda</th><th>Estoque</th><th>Status</th></tr></thead>
+                        <tbody id="productsList"></tbody>
+                    </table>
+                </div>
+            `;
+            
+            const tbody = document.getElementById('productsList');
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8">Nenhum produto cadastrado</td></tr>';
+            } else {
+                tbody.innerHTML = products.map(p => `
+                    <tr>
+                        <td>${p.name}</td>
+                        <td>${p.sku || '-'}</td>
+                        <td>${formatPrice(p.purchase_price)}</td>
+                        <td>${formatPrice(p.sale_price)}</td>
+                        <td><span class="${p.stock_quantity <= p.min_stock_quantity ? 'text-red-500 font-bold' : ''}">${p.stock_quantity}</span></td>
+                        <td><span class="badge badge-${p.is_active ? 'success' : 'danger'}">${p.is_active ? 'Ativo' : 'Inativo'}</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        function renderFinanceiro(container) {
+            container.innerHTML = `
+                <div class="card p-4 mb-4">
+                    <div class="flex gap-4">
+                        <select id="periodFilter" class="p-2 border rounded">
+                            <option value="month">Este Mês</option>
+                            <option value="year">Este Ano</option>
+                            <option value="all">Todos</option>
+                        </select>
+                        <button onclick="loadFinancial()" class="btn btn-primary">Filtrar</button>
+                        <button onclick="showFinancialModal()" class="btn btn-outline">+ Nova Transação</button>
+                    </div>
+                </div>
+                <div class="card overflow-x-auto">
+                    <table class="data-table">
+                        <thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead>
+                        <tbody id="financialList"></tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function renderMensagens(container) {
+            container.innerHTML = `
+                <div class="mb-4"><button onclick="showMessageModal()" class="btn btn-primary">+ Nova Mensagem</button></div>
+                <div class="card overflow-x-auto">
+                    <table class="data-table">
+                        <thead><tr><th>Título</th><th>Categoria</th><th>Conteúdo</th><th>Status</th></tr></thead>
+                        <tbody id="messagesList"></tbody>
+                    </table>
+                </div>
+            `;
+            
+            const tbody = document.getElementById('messagesList');
+            if (messages.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8">Nenhuma mensagem cadastrada</td></tr>';
+            } else {
+                tbody.innerHTML = messages.map(m => `
+                    <tr>
+                        <td>${m.title}</td>
+                        <td>${m.category || '-'}</td>
+                        <td class="max-w-md truncate">${m.content}</td>
+                        <td><span class="badge badge-${m.is_active ? 'success' : 'danger'}">${m.is_active ? 'Ativa' : 'Inativa'}</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        function renderConfiguracoes(container) {
+            container.innerHTML = `
+                <div class="card p-6">
+                    <h3 class="font-semibold mb-4">Horários de Funcionamento</h3>
+                    <div id="workHoursForm"></div>
+                    <hr class="my-6">
+                    <h3 class="font-semibold mb-4">Configurações de Agendamento</h3>
+                    <div id="appointmentSettingsForm"></div>
+                    <button onclick="saveSettings()" class="btn btn-primary mt-6">Salvar Configurações</button>
+                </div>
+            `;
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                pending: 'Pendente',
+                confirmed: 'Confirmado',
+                in_progress: 'Em andamento',
+                completed: 'Concluído',
+                cancelled: 'Cancelado',
+                no_show: 'Não compareceu'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        window.selectService = selectService;
+        window.selectSlot = selectSlot;
+        window.confirmDateTime = confirmDateTime;
+        window.resetBooking = resetBooking;
+        window.goBack = goBack;
+        window.renderApp = renderApp;
+        window.switchAdminTab = switchAdminTab;
+        window.toggleSidebar = toggleSidebar;
+        window.logout = logout;
+        window.loadAppointments = loadAppointments;
+        
+        // Verificar sessão salva
+        const savedToken = localStorage.getItem('authToken');
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedToken && savedUser) {
+            authToken = savedToken;
+            currentUser = JSON.parse(savedUser);
+            if (window.location.pathname === '/admin') {
+                currentView = 'admin';
+                currentAdminTab = 'dashboard';
+                loadDashboard();
+            }
+        }
+        
+        renderApp();
+    </script>
+</body>
+</html>
