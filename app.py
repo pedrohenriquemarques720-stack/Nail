@@ -1,4 +1,4 @@
-# app.py - Versão Streamlit Completa (SQL Corrigido)
+# app.py - Versão Streamlit Completa (Corrigida)
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -368,7 +368,7 @@ def init_db():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', s)
         
-        # Clientes exemplo (corrigido)
+        # Clientes exemplo
         clients = [
             (str(uuid.uuid4()), prof_id, 'Ana Silva', '(11) 98888-8888', 'ana@email.com', None, '1990-03-15', None, None, None, 3, 450.00, '2024-03-20', 1, 1),
             (str(uuid.uuid4()), prof_id, 'Carla Souza', '(11) 97777-7777', 'carla@email.com', None, '1988-07-22', None, None, None, 5, 780.00, '2024-03-22', 1, 1),
@@ -388,7 +388,7 @@ def init_db():
         client_list = cursor.execute("SELECT id FROM clients").fetchall()
         service_list = cursor.execute("SELECT id FROM services").fetchall()
         
-        if client_list and service_list:
+        if client_list and service_list and len(client_list) >= 4 and len(service_list) >= 5:
             appointments = [
                 (str(uuid.uuid4()), client_list[0][0], service_list[0][0], prof_id, 
                  datetime(now.year, now.month, now.day, 10, 0).isoformat(),
@@ -609,16 +609,25 @@ def render_booking_page():
         </div>
         """, unsafe_allow_html=True)
         
+        # Links Sociais
         cols = st.columns(3)
-        if prof['instagram']:
-            with cols[0]:
+        with cols[0]:
+            if prof['instagram']:
                 st.link_button("📷 Instagram", f"https://instagram.com/{prof['instagram'].replace('@', '')}", use_container_width=True)
-        if prof['whatsapp']:
-            with cols[1]:
+            else:
+                st.button("📷 Instagram", disabled=True, use_container_width=True)
+        
+        with cols[1]:
+            if prof['whatsapp']:
                 st.link_button("💬 WhatsApp", f"https://wa.me/{prof['whatsapp']}", use_container_width=True)
-        if prof['address']:
-            with cols[2]:
-                st.link_button("📍 Endereço", None, disabled=True, use_container_width=True)
+            else:
+                st.button("💬 WhatsApp", disabled=True, use_container_width=True)
+        
+        with cols[2]:
+            if prof['address']:
+                st.markdown(f"<div style='background: #f3f4f6; padding: 8px 16px; border-radius: 8px; text-align: center;'>📍 {prof['address']}</div>", unsafe_allow_html=True)
+            else:
+                st.button("📍 Endereço", disabled=True, use_container_width=True)
         
         st.markdown("---")
         
@@ -834,12 +843,12 @@ def render_booking_widget(prof):
             """)
         
         conn = get_db()
-        prof = conn.execute("SELECT * FROM professionals WHERE id = ?", (service['professional_id'],)).fetchone()
+        prof_data = conn.execute("SELECT * FROM professionals WHERE id = ?", (service['professional_id'],)).fetchone()
         conn.close()
         
-        if prof and prof['whatsapp']:
+        if prof_data and prof_data['whatsapp']:
             message = f"Olá! Acabei de agendar um {service['name']} para {format_date(st.session_state.selected_date)} às {st.session_state.selected_time}. Meu código é: {st.session_state.booking_id[:8]}"
-            whatsapp_url = f"https://wa.me/{prof['whatsapp']}?text={message}"
+            whatsapp_url = f"https://wa.me/{prof_data['whatsapp']}?text={message}"
             st.link_button("💬 Compartilhar no WhatsApp", whatsapp_url, use_container_width=True)
         
         if st.button("← Fazer novo agendamento", use_container_width=True):
