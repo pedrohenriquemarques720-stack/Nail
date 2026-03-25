@@ -1,30 +1,5 @@
-# Framework Principal
 streamlit==1.32.0
 streamlit-option-menu==0.3.6
-
-# Banco de Dados
-sqlite3
-
-# Utilitários
-python-dateutil==2.8.2
-pytz==2023.3
-
-# Autenticação e Segurança
-bcrypt==4.1.0
-python-jose==3.3.0
-passlib==1.7.4
-
-# APIs e Requisições
-requests==2.31.0
-
-# Gráficos (alternativa para o Chart.js)
-plotly==5.18.0
-matplotlib==3.8.2
 pandas==2.1.4
-
-# Utilitários de Data
+plotly==5.18.0
 python-dateutil==2.8.2
-
-# Para deploy no Streamlit Cloud
-streamlit-aggrid==0.3.4
-streamlit-extras==0.2.2
