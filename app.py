@@ -1,4 +1,4 @@
-# app.py - Versão Streamlit Completa (sem dependências externas)
+# app.py - Versão Streamlit Completa (SQL Corrigido)
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -24,7 +24,6 @@ st.set_page_config(
 # ============================================
 st.markdown("""
 <style>
-    /* Cores principais */
     .stButton > button {
         background-color: #E91E63;
         color: white;
@@ -36,50 +35,6 @@ st.markdown("""
         background-color: #D81B60;
         color: white;
     }
-    
-    /* Menu lateral personalizado */
-    .custom-sidebar {
-        background-color: white;
-        border-radius: 12px;
-        padding: 8px;
-        margin-bottom: 16px;
-    }
-    .nav-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 16px;
-        margin: 4px 0;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-        color: #4b5563;
-    }
-    .nav-item:hover {
-        background-color: #fef2f6;
-        color: #E91E63;
-    }
-    .nav-item.active {
-        background-color: #fef2f6;
-        color: #E91E63;
-        border-left: 3px solid #E91E63;
-    }
-    
-    /* Cards */
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
-        border-radius: 16px;
-        color: white;
-        margin-bottom: 20px;
-    }
-    
-    /* Títulos */
-    h1, h2, h3 {
-        color: #1a1a2e;
-    }
-    
-    /* Badges */
     .badge-success {
         background-color: #d1fae5;
         color: #065f46;
@@ -104,8 +59,6 @@ st.markdown("""
         font-size: 12px;
         display: inline-block;
     }
-    
-    /* Gráficos personalizados */
     .progress-bar {
         height: 8px;
         background-color: #e5e7eb;
@@ -125,33 +78,6 @@ st.markdown("""
         padding: 16px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         margin-bottom: 16px;
-    }
-    .service-item {
-        background: white;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 8px;
-        border: 1px solid #e5e7eb;
-        transition: all 0.2s;
-    }
-    .service-item:hover {
-        border-color: #E91E63;
-        box-shadow: 0 2px 8px rgba(233,30,99,0.1);
-    }
-    
-    /* Menu superior para mobile */
-    @media (max-width: 768px) {
-        .desktop-menu {
-            display: none;
-        }
-        .mobile-menu {
-            display: block;
-        }
-    }
-    @media (min-width: 769px) {
-        .mobile-menu {
-            display: none;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -442,60 +368,64 @@ def init_db():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', s)
         
-        # Clientes exemplo
+        # Clientes exemplo (corrigido)
         clients = [
-            (str(uuid.uuid4()), prof_id, 'Ana Silva', '(11) 98888-8888', 'ana@email.com', None, '1990-03-15', None, None, None, 3, 450, '2024-03-20'),
-            (str(uuid.uuid4()), prof_id, 'Carla Souza', '(11) 97777-7777', 'carla@email.com', None, '1988-07-22', None, None, None, 5, 780, '2024-03-22'),
-            (str(uuid.uuid4()), prof_id, 'Mariana Santos', '(11) 96666-6666', 'mariana@email.com', None, '1995-12-10', None, None, None, 2, 260, '2024-03-18'),
-            (str(uuid.uuid4()), prof_id, 'Fernanda Lima', '(11) 95555-5555', 'fernanda@email.com', None, '1992-03-25', None, None, None, 1, 180, '2024-03-25'),
-            (str(uuid.uuid4()), prof_id, 'Patrícia Oliveira', '(11) 94444-4444', 'patricia@email.com', None, '1985-03-30', None, None, None, 4, 620, '2024-03-21'),
+            (str(uuid.uuid4()), prof_id, 'Ana Silva', '(11) 98888-8888', 'ana@email.com', None, '1990-03-15', None, None, None, 3, 450.00, '2024-03-20', 1, 1),
+            (str(uuid.uuid4()), prof_id, 'Carla Souza', '(11) 97777-7777', 'carla@email.com', None, '1988-07-22', None, None, None, 5, 780.00, '2024-03-22', 1, 1),
+            (str(uuid.uuid4()), prof_id, 'Mariana Santos', '(11) 96666-6666', 'mariana@email.com', None, '1995-12-10', None, None, None, 2, 260.00, '2024-03-18', 1, 1),
+            (str(uuid.uuid4()), prof_id, 'Fernanda Lima', '(11) 95555-5555', 'fernanda@email.com', None, '1992-03-25', None, None, None, 1, 180.00, '2024-03-25', 1, 1),
+            (str(uuid.uuid4()), prof_id, 'Patrícia Oliveira', '(11) 94444-4444', 'patricia@email.com', None, '1985-03-30', None, None, None, 4, 620.00, '2024-03-21', 1, 1),
         ]
         
         for c in clients:
             cursor.execute('''
-                INSERT INTO clients (id, professional_id, full_name, phone, email, birth_date, total_visits, total_spent, last_visit)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO clients (id, professional_id, full_name, phone, email, alternative_phone, birth_date, address, notes, allergies, total_visits, total_spent, last_visit, whatsapp_optin, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', c)
         
         # Agendamentos exemplo
         now = datetime.now()
-        appointments = [
-            (str(uuid.uuid4()), clients[0][0], services[0][0], prof_id, 
-             datetime(now.year, now.month, now.day, 10, 0).isoformat(),
-             datetime(now.year, now.month, now.day, 12, 0).isoformat(),
-             'confirmed', 'PIX', 'paid', 180, 0),
-            (str(uuid.uuid4()), clients[1][0], services[1][0], prof_id,
-             datetime(now.year, now.month, now.day, 14, 0).isoformat(),
-             datetime(now.year, now.month, now.day, 15, 30).isoformat(),
-             'confirmed', 'Cartão', 'paid', 120, 0),
-            (str(uuid.uuid4()), clients[2][0], services[2][0], prof_id,
-             datetime(now.year, now.month, now.day, 16, 0).isoformat(),
-             datetime(now.year, now.month, now.day, 17, 0).isoformat(),
-             'pending', None, 'pending', 80, 0),
-            (str(uuid.uuid4()), clients[3][0], services[4][0], prof_id,
-             datetime(now.year, now.month, now.day + 1, 9, 0).isoformat(),
-             datetime(now.year, now.month, now.day + 1, 10, 30).isoformat(),
-             'confirmed', 'Dinheiro', 'pending', 90, 0),
-        ]
+        client_list = cursor.execute("SELECT id FROM clients").fetchall()
+        service_list = cursor.execute("SELECT id FROM services").fetchall()
         
-        for a in appointments:
-            cursor.execute('''
-                INSERT INTO appointments (id, client_id, service_id, professional_id, start_time, end_time, status, payment_method, payment_status, amount_paid, discount)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', a)
+        if client_list and service_list:
+            appointments = [
+                (str(uuid.uuid4()), client_list[0][0], service_list[0][0], prof_id, 
+                 datetime(now.year, now.month, now.day, 10, 0).isoformat(),
+                 datetime(now.year, now.month, now.day, 12, 0).isoformat(),
+                 'confirmed', 'PIX', 'paid', 180, 0, None, 0, None, None, 'client'),
+                (str(uuid.uuid4()), client_list[1][0], service_list[1][0], prof_id,
+                 datetime(now.year, now.month, now.day, 14, 0).isoformat(),
+                 datetime(now.year, now.month, now.day, 15, 30).isoformat(),
+                 'confirmed', 'Cartão', 'paid', 120, 0, None, 0, None, None, 'client'),
+                (str(uuid.uuid4()), client_list[2][0], service_list[2][0], prof_id,
+                 datetime(now.year, now.month, now.day, 16, 0).isoformat(),
+                 datetime(now.year, now.month, now.day, 17, 0).isoformat(),
+                 'pending', None, 'pending', 80, 0, None, 0, None, None, 'client'),
+                (str(uuid.uuid4()), client_list[3][0], service_list[4][0], prof_id,
+                 datetime(now.year, now.month, now.day + 1, 9, 0).isoformat(),
+                 datetime(now.year, now.month, now.day + 1, 10, 30).isoformat(),
+                 'confirmed', 'Dinheiro', 'pending', 90, 0, None, 0, None, None, 'client'),
+            ]
+            
+            for a in appointments:
+                cursor.execute('''
+                    INSERT INTO appointments (id, client_id, service_id, professional_id, start_time, end_time, status, payment_method, payment_status, amount_paid, discount, notes, reminder_sent, cancelled_at, cancellation_reason, created_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', a)
         
         # Mensagens pré-definidas
         messages = [
-            (str(uuid.uuid4()), prof_id, 'Confirmação de horário', 'Olá {nome}, seu horário está confirmado para {data} às {hora}.', 'confirmacao'),
-            (str(uuid.uuid4()), prof_id, 'Lembrete', 'Olá {nome}, lembrete: seu horário é amanhã às {hora}.', 'lembrete'),
-            (str(uuid.uuid4()), prof_id, 'Cancelamento', 'Olá {nome}, seu horário foi cancelado conforme solicitado.', 'cancelamento'),
-            (str(uuid.uuid4()), prof_id, 'Aniversário', 'Feliz aniversário! 🎂 Venha ganhar um brinde especial!', 'aniversario'),
+            (str(uuid.uuid4()), prof_id, 'Confirmação de horário', 'Olá {nome}, seu horário está confirmado para {data} às {hora}.', 'confirmacao', 1),
+            (str(uuid.uuid4()), prof_id, 'Lembrete', 'Olá {nome}, lembrete: seu horário é amanhã às {hora}.', 'lembrete', 1),
+            (str(uuid.uuid4()), prof_id, 'Cancelamento', 'Olá {nome}, seu horário foi cancelado conforme solicitado.', 'cancelamento', 1),
+            (str(uuid.uuid4()), prof_id, 'Aniversário', 'Feliz aniversário! 🎂 Venha ganhar um brinde especial!', 'aniversario', 1),
         ]
         
         for m in messages:
             cursor.execute('''
-                INSERT INTO messages (id, professional_id, title, content, category)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO messages (id, professional_id, title, content, category, is_active)
+                VALUES (?, ?, ?, ?, ?, ?)
             ''', m)
         
         # Produtos exemplo
@@ -534,14 +464,6 @@ def format_date(date_str):
     except:
         return date_str
 
-def format_datetime(date_str):
-    if not date_str:
-        return ""
-    try:
-        return datetime.fromisoformat(date_str).strftime('%d/%m/%Y %H:%M')
-    except:
-        return date_str
-
 def get_status_badge(status):
     badges = {
         'pending': '<span class="badge-warning">⏳ Pendente</span>',
@@ -554,7 +476,6 @@ def get_status_badge(status):
     return badges.get(status, status)
 
 def create_bar_chart(data, labels, title):
-    """Cria um gráfico de barras usando HTML/CSS"""
     max_value = max(data) if data else 1
     bars_html = ""
     for i, value in enumerate(data):
@@ -570,7 +491,6 @@ def create_bar_chart(data, labels, title):
             </div>
         </div>
         """
-    
     return f"""
     <div class="stat-card">
         <h4 style="margin-bottom: 16px;">{title}</h4>
@@ -579,7 +499,6 @@ def create_bar_chart(data, labels, title):
     """
 
 def create_pie_chart(data, labels, title):
-    """Cria um gráfico de pizza usando HTML/CSS"""
     total = sum(data) if data else 1
     colors = ['#E91E63', '#FF4081', '#F50057', '#FF80AB', '#FFB7C5', '#FFC0CB']
     items_html = ""
@@ -594,7 +513,6 @@ def create_pie_chart(data, labels, title):
         </div>
         """
     
-    # Criar um gráfico de pizza simples usando CSS
     pie_chart = f"""
     <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
         <div style="width: 120px; height: 120px; border-radius: 50%; background: conic-gradient({', '.join([f'{colors[i % len(colors)]} 0% {sum(data[:i+1])/total*100}%' for i in range(len(data))])});">
@@ -622,7 +540,6 @@ def check_auth():
         st.session_state.user_name = None
         st.session_state.view = 'booking'
         st.session_state.admin_tab = 'dashboard'
-    
     return st.session_state.authenticated
 
 def login():
@@ -670,7 +587,6 @@ def logout():
 # PÁGINA PÚBLICA DE AGENDAMENTO
 # ============================================
 def render_booking_page():
-    # Buscar profissional
     slug = "stebarbosa"
     
     conn = get_db()
@@ -681,7 +597,6 @@ def render_booking_page():
         st.error("Profissional não encontrada")
         return
     
-    # Header
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown(f"""
@@ -694,7 +609,6 @@ def render_booking_page():
         </div>
         """, unsafe_allow_html=True)
         
-        # Links Sociais
         cols = st.columns(3)
         if prof['instagram']:
             with cols[0]:
@@ -708,24 +622,19 @@ def render_booking_page():
         
         st.markdown("---")
         
-        # Área de Agendamento
         if st.button("🔐 Área do Profissional", use_container_width=True):
             st.session_state.view = 'admin'
             st.rerun()
     
-    # Widget de Agendamento
     render_booking_widget(prof)
 
 def render_booking_widget(prof):
-    # Inicializar estado do agendamento
     if 'booking_step' not in st.session_state:
         st.session_state.booking_step = 1
         st.session_state.selected_service = None
         st.session_state.selected_date = None
         st.session_state.selected_time = None
-        st.session_state.client_data = None
     
-    # Steps
     steps = ["Escolha o Serviço", "Data e Horário", "Seus Dados", "Confirmação"]
     current_step = st.session_state.booking_step - 1
     
@@ -749,14 +658,10 @@ def render_booking_widget(prof):
         
         st.subheader("Escolha um serviço")
         
-        # Busca
         search = st.text_input("🔍 Buscar serviço", placeholder="Digite o nome do serviço...")
-        
-        # Filtro por categoria
         categories = ['Todos'] + list(set([s['category'] for s in services if s['category']]))
         selected_category = st.selectbox("Categoria", categories)
         
-        # Lista de serviços
         for service in services:
             if search and search.lower() not in service['name'].lower():
                 continue
@@ -792,7 +697,6 @@ def render_booking_widget(prof):
             min_date = datetime.now() + timedelta(hours=2)
             max_date = datetime.now() + timedelta(days=30)
             selected_date = st.date_input("Selecione a data", min_value=min_date.date(), max_value=max_date.date())
-            
             if selected_date:
                 st.session_state.selected_date = selected_date.isoformat()
         
@@ -812,7 +716,6 @@ def render_booking_widget(prof):
                     current = datetime(selected_date.year, selected_date.month, selected_date.day, start_hour, start_min)
                     end = datetime(selected_date.year, selected_date.month, selected_date.day, end_hour, end_min)
                     
-                    # Buscar agendamentos existentes
                     appointments = conn.execute("""
                         SELECT start_time, end_time FROM appointments 
                         WHERE professional_id = ? AND date(start_time) = date(?) AND status NOT IN ('cancelled', 'no_show')
@@ -878,13 +781,10 @@ def render_booking_widget(prof):
                     if not full_name or not phone:
                         st.error("Preencha nome e telefone")
                     else:
-                        # Criar agendamento
                         date_time = datetime.fromisoformat(f"{st.session_state.selected_date}T{st.session_state.selected_time}:00")
                         end_time = date_time + timedelta(minutes=service['duration_minutes'])
                         
                         conn = get_db()
-                        
-                        # Buscar ou criar cliente
                         client = conn.execute("SELECT id FROM clients WHERE phone = ? AND professional_id = ?", (phone, prof['id'])).fetchone()
                         
                         if client:
@@ -896,7 +796,6 @@ def render_booking_widget(prof):
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """, (client_id, prof['id'], full_name, phone, email, birth_date.isoformat() if birth_date else None, notes, 1 if whatsapp_optin else 0))
                         
-                        # Criar agendamento
                         appointment_id = str(uuid.uuid4())
                         conn.execute("""
                             INSERT INTO appointments (id, client_id, service_id, professional_id, start_time, end_time, notes, created_by)
@@ -934,8 +833,11 @@ def render_booking_widget(prof):
             - Em caso de imprevistos, cancele com 24h de antecedência
             """)
         
-        # Link WhatsApp
-        if prof['whatsapp']:
+        conn = get_db()
+        prof = conn.execute("SELECT * FROM professionals WHERE id = ?", (service['professional_id'],)).fetchone()
+        conn.close()
+        
+        if prof and prof['whatsapp']:
             message = f"Olá! Acabei de agendar um {service['name']} para {format_date(st.session_state.selected_date)} às {st.session_state.selected_time}. Meu código é: {st.session_state.booking_id[:8]}"
             whatsapp_url = f"https://wa.me/{prof['whatsapp']}?text={message}"
             st.link_button("💬 Compartilhar no WhatsApp", whatsapp_url, use_container_width=True)
@@ -948,54 +850,42 @@ def render_booking_widget(prof):
             st.rerun()
 
 # ============================================
-# MENU ADMINISTRATIVO MANUAL
+# MENU ADMINISTRATIVO
 # ============================================
 def render_admin_menu():
-    """Menu administrativo personalizado sem bibliotecas externas"""
-    
-    menu_items = {
-        "dashboard": {"icon": "📊", "label": "Dashboard"},
-        "agenda": {"icon": "📅", "label": "Agenda"},
-        "clientes": {"icon": "👥", "label": "Clientes"},
-        "servicos": {"icon": "💅", "label": "Serviços"},
-        "produtos": {"icon": "🛍️", "label": "Produtos"},
-        "financeiro": {"icon": "💰", "label": "Financeiro"},
-        "mensagens": {"icon": "💬", "label": "Mensagens"},
-        "configuracoes": {"icon": "⚙️", "label": "Configurações"}
-    }
-    
-    st.sidebar.markdown("### Menu Principal")
-    
-    for key, item in menu_items.items():
-        is_active = st.session_state.admin_tab == key
-        button_label = f"{item['icon']} {item['label']}"
+    with st.sidebar:
+        st.image("https://via.placeholder.com/150x150?text=💅", width=100)
+        st.markdown(f"### Olá, {st.session_state.user_name}!")
+        st.markdown("---")
         
-        if st.sidebar.button(
-            button_label, 
-            key=f"menu_{key}",
-            use_container_width=True,
-            type="primary" if is_active else "secondary"
-        ):
-            st.session_state.admin_tab = key
+        menu_items = {
+            "dashboard": "📊 Dashboard",
+            "agenda": "📅 Agenda",
+            "clientes": "👥 Clientes",
+            "servicos": "💅 Serviços",
+            "produtos": "🛍️ Produtos",
+            "financeiro": "💰 Financeiro",
+            "mensagens": "💬 Mensagens",
+            "configuracoes": "⚙️ Configurações"
+        }
+        
+        for key, label in menu_items.items():
+            if st.sidebar.button(label, key=f"menu_{key}", use_container_width=True):
+                st.session_state.admin_tab = key
+                st.rerun()
+        
+        st.markdown("---")
+        if st.sidebar.button("🚪 Sair", use_container_width=True):
+            logout()
             st.rerun()
-    
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Sair", use_container_width=True):
-        logout()
-        st.rerun()
 
 # ============================================
 # PÁGINA ADMINISTRATIVA
 # ============================================
 def render_admin_page():
-    # Sidebar com menu
     with st.sidebar:
-        st.image("https://via.placeholder.com/150x150?text=💅", width=100)
-        st.markdown(f"### Olá, {st.session_state.user_name}!")
-        st.markdown("---")
         render_admin_menu()
     
-    # Renderizar conteúdo baseado no menu selecionado
     if st.session_state.admin_tab == "dashboard":
         render_admin_dashboard()
     elif st.session_state.admin_tab == "agenda":
@@ -1017,39 +907,30 @@ def render_admin_dashboard():
     st.title("📊 Dashboard")
     
     conn = get_db()
-    
-    # Cards
     col1, col2, col3, col4 = st.columns(4)
     
-    # Receita Total
     revenue = conn.execute("SELECT COALESCE(SUM(amount_paid), 0) FROM appointments WHERE professional_id = ? AND status = 'completed'", (st.session_state.user_id,)).fetchone()[0]
+    expenses = conn.execute("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE professional_id = ? AND type = 'expense' AND status = 'paid'", (st.session_state.user_id,)).fetchone()[0]
+    profit = revenue - expenses
+    appointments_count = conn.execute("SELECT COUNT(*) FROM appointments WHERE professional_id = ? AND status = 'completed'", (st.session_state.user_id,)).fetchone()[0]
+    
     with col1:
         st.metric("Receita Total", format_currency(revenue))
-    
-    # Despesas
-    expenses = conn.execute("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE professional_id = ? AND type = 'expense' AND status = 'paid'", (st.session_state.user_id,)).fetchone()[0]
     with col2:
         st.metric("Despesas", format_currency(expenses))
-    
-    # Lucro
-    profit = revenue - expenses
     with col3:
         st.metric("Lucro Líquido", format_currency(profit))
-    
-    # Atendimentos
-    appointments_count = conn.execute("SELECT COUNT(*) FROM appointments WHERE professional_id = ? AND status = 'completed'", (st.session_state.user_id,)).fetchone()[0]
     with col4:
         st.metric("Atendimentos", appointments_count)
     
     st.markdown("---")
     
-    # Gráficos usando CSS puro
     col1, col2 = st.columns(2)
     
     with col1:
         st.subheader("Top 5 Serviços")
         top_services = conn.execute("""
-            SELECT s.name, COUNT(a.id) as total, SUM(a.amount_paid) as revenue
+            SELECT s.name, SUM(a.amount_paid) as revenue
             FROM appointments a
             JOIN services s ON a.service_id = s.id
             WHERE a.professional_id = ? AND a.status = 'completed'
@@ -1059,37 +940,34 @@ def render_admin_dashboard():
         """, (st.session_state.user_id,)).fetchall()
         
         if top_services:
-            services_names = [s['name'] for s in top_services]
-            services_revenue = [s['revenue'] for s in top_services]
-            st.markdown(create_bar_chart(services_revenue, services_names, "Receita por Serviço"), unsafe_allow_html=True)
+            names = [s['name'] for s in top_services]
+            revenues = [s['revenue'] for s in top_services]
+            st.markdown(create_bar_chart(revenues, names, "Receita por Serviço"), unsafe_allow_html=True)
         else:
             st.info("Nenhum dado disponível")
     
     with col2:
         st.subheader("Formas de Pagamento")
         payments = conn.execute("""
-            SELECT payment_method, COUNT(*) as count, SUM(amount_paid) as total
+            SELECT payment_method, SUM(amount_paid) as total
             FROM appointments
             WHERE professional_id = ? AND status = 'completed' AND payment_method IS NOT NULL
             GROUP BY payment_method
         """, (st.session_state.user_id,)).fetchall()
         
         if payments:
-            payment_methods = [p['payment_method'] for p in payments]
-            payment_totals = [p['total'] for p in payments]
-            st.markdown(create_pie_chart(payment_totals, payment_methods, "Distribuição de Pagamentos"), unsafe_allow_html=True)
+            methods = [p['payment_method'] for p in payments]
+            totals = [p['total'] for p in payments]
+            st.markdown(create_pie_chart(totals, methods, "Distribuição de Pagamentos"), unsafe_allow_html=True)
         else:
             st.info("Nenhum dado disponível")
     
     st.markdown("---")
-    
-    # Aniversariantes do Mês
     st.subheader("🎂 Aniversariantes do Mês")
     birthdays = conn.execute("""
         SELECT full_name, phone, birth_date
         FROM clients
-        WHERE professional_id = ? 
-          AND birth_date IS NOT NULL
+        WHERE professional_id = ? AND birth_date IS NOT NULL
           AND strftime('%m', birth_date) = strftime('%m', 'now')
         ORDER BY strftime('%d', birth_date)
     """, (st.session_state.user_id,)).fetchall()
@@ -1172,17 +1050,18 @@ def render_admin_clientes():
     search = st.text_input("🔍 Buscar cliente", placeholder="Nome ou telefone...")
     
     conn = get_db()
-    query = "SELECT * FROM clients WHERE professional_id = ?"
-    params = [st.session_state.user_id]
-    
     if search:
-        query += " AND (full_name LIKE ? OR phone LIKE ?)"
-        params.append(f"%{search}%")
-        params.append(f"%{search}%")
-    
-    query += " ORDER BY total_spent DESC, last_visit DESC"
-    
-    clients = conn.execute(query, params).fetchall()
+        clients = conn.execute("""
+            SELECT * FROM clients 
+            WHERE professional_id = ? AND (full_name LIKE ? OR phone LIKE ?)
+            ORDER BY total_spent DESC
+        """, (st.session_state.user_id, f"%{search}%", f"%{search}%")).fetchall()
+    else:
+        clients = conn.execute("""
+            SELECT * FROM clients 
+            WHERE professional_id = ?
+            ORDER BY total_spent DESC
+        """, (st.session_state.user_id,)).fetchall()
     conn.close()
     
     if clients:
@@ -1236,7 +1115,7 @@ def render_admin_servicos():
     else:
         st.info("Nenhum serviço cadastrado")
     
-    # Modal de criação/edição
+    # Formulário de criação
     if st.session_state.get('show_service_form', False):
         with st.form("service_form"):
             st.subheader("Novo Serviço")
@@ -1265,28 +1144,28 @@ def render_admin_servicos():
                     st.session_state.show_service_form = False
                     st.rerun()
     
-    # Modal de edição
+    # Formulário de edição
     if st.session_state.get('editing_service'):
-        service = st.session_state.editing_service
+        s = st.session_state.editing_service
         with st.form("edit_service_form"):
-            st.subheader(f"Editando: {service['name']}")
-            name = st.text_input("Nome", value=service['name'])
-            description = st.text_area("Descrição", value=service['description'] or "")
-            category = st.selectbox("Categoria", ["Alongamento", "Manutenção", "Esmaltação", "Pedicure", "Outros"], index=["Alongamento", "Manutenção", "Esmaltação", "Pedicure", "Outros"].index(service['category']) if service['category'] in ["Alongamento", "Manutenção", "Esmaltação", "Pedicure", "Outros"] else 0)
-            duration = st.number_input("Duração (minutos)", min_value=15, value=service['duration_minutes'])
-            price = st.number_input("Preço", min_value=0.0, value=service['price'])
-            commission = st.number_input("Comissão (%)", min_value=0.0, value=service['commission_percentage'])
-            is_active = st.checkbox("Ativo", value=bool(service['is_active']))
+            st.subheader(f"Editando: {s['name']}")
+            name = st.text_input("Nome", value=s['name'])
+            description = st.text_area("Descrição", value=s['description'] or "")
+            category = st.selectbox("Categoria", ["Alongamento", "Manutenção", "Esmaltação", "Pedicure", "Outros"], 
+                                   index=["Alongamento", "Manutenção", "Esmaltação", "Pedicure", "Outros"].index(s['category']) if s['category'] in ["Alongamento", "Manutenção", "Esmaltação", "Pedicure", "Outros"] else 0)
+            duration = st.number_input("Duração (minutos)", min_value=15, value=s['duration_minutes'])
+            price = st.number_input("Preço", min_value=0.0, value=s['price'])
+            commission = st.number_input("Comissão (%)", min_value=0.0, value=s['commission_percentage'])
+            is_active = st.checkbox("Ativo", value=bool(s['is_active']))
             
             col1, col2, col3 = st.columns(3)
             with col1:
                 if st.form_submit_button("Salvar", use_container_width=True):
                     conn = get_db()
                     conn.execute("""
-                        UPDATE services 
-                        SET name = ?, description = ?, price = ?, duration_minutes = ?, category = ?, commission_percentage = ?, is_active = ?
-                        WHERE id = ?
-                    """, (name, description, price, duration, category, commission, 1 if is_active else 0, service['id']))
+                        UPDATE services SET name=?, description=?, price=?, duration_minutes=?, category=?, commission_percentage=?, is_active=?
+                        WHERE id=?
+                    """, (name, description, price, duration, category, commission, 1 if is_active else 0, s['id']))
                     conn.commit()
                     conn.close()
                     st.session_state.editing_service = None
@@ -1294,7 +1173,7 @@ def render_admin_servicos():
             with col2:
                 if st.form_submit_button("Excluir", use_container_width=True):
                     conn = get_db()
-                    conn.execute("DELETE FROM services WHERE id = ?", (service['id'],))
+                    conn.execute("DELETE FROM services WHERE id=?", (s['id'],))
                     conn.commit()
                     conn.close()
                     st.session_state.editing_service = None
@@ -1338,7 +1217,7 @@ def render_admin_produtos():
     else:
         st.info("Nenhum produto cadastrado")
     
-    # Modal de criação
+    # Formulário de criação
     if st.session_state.get('show_product_form', False):
         with st.form("product_form"):
             st.subheader("Novo Produto")
@@ -1369,30 +1248,30 @@ def render_admin_produtos():
                     st.session_state.show_product_form = False
                     st.rerun()
     
-    # Modal de edição
+    # Formulário de edição
     if st.session_state.get('editing_product'):
-        product = st.session_state.editing_product
+        p = st.session_state.editing_product
         with st.form("edit_product_form"):
-            st.subheader(f"Editando: {product['name']}")
-            name = st.text_input("Nome", value=product['name'])
-            description = st.text_area("Descrição", value=product['description'] or "")
-            sku = st.text_input("SKU", value=product['sku'] or "")
-            category = st.selectbox("Categoria", ["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"], index=["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"].index(product['category']) if product['category'] in ["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"] else 0)
-            purchase_price = st.number_input("Preço de Compra", min_value=0.0, value=product['purchase_price'])
-            sale_price = st.number_input("Preço de Venda", min_value=0.0, value=product['sale_price'])
-            stock = st.number_input("Quantidade em Estoque", min_value=0, value=product['stock_quantity'])
-            min_stock = st.number_input("Estoque Mínimo", min_value=0, value=product['min_stock_quantity'])
-            is_active = st.checkbox("Ativo", value=bool(product['is_active']))
+            st.subheader(f"Editando: {p['name']}")
+            name = st.text_input("Nome", value=p['name'])
+            description = st.text_area("Descrição", value=p['description'] or "")
+            sku = st.text_input("SKU", value=p['sku'] or "")
+            category = st.selectbox("Categoria", ["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"], 
+                                   index=["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"].index(p['category']) if p['category'] in ["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"] else 0)
+            purchase_price = st.number_input("Preço de Compra", min_value=0.0, value=p['purchase_price'])
+            sale_price = st.number_input("Preço de Venda", min_value=0.0, value=p['sale_price'])
+            stock = st.number_input("Quantidade em Estoque", min_value=0, value=p['stock_quantity'])
+            min_stock = st.number_input("Estoque Mínimo", min_value=0, value=p['min_stock_quantity'])
+            is_active = st.checkbox("Ativo", value=bool(p['is_active']))
             
             col1, col2, col3 = st.columns(3)
             with col1:
                 if st.form_submit_button("Salvar", use_container_width=True):
                     conn = get_db()
                     conn.execute("""
-                        UPDATE products 
-                        SET name = ?, description = ?, sku = ?, category = ?, purchase_price = ?, sale_price = ?, stock_quantity = ?, min_stock_quantity = ?, is_active = ?
-                        WHERE id = ?
-                    """, (name, description, sku, category, purchase_price, sale_price, stock, min_stock, 1 if is_active else 0, product['id']))
+                        UPDATE products SET name=?, description=?, sku=?, category=?, purchase_price=?, sale_price=?, stock_quantity=?, min_stock_quantity=?, is_active=?
+                        WHERE id=?
+                    """, (name, description, sku, category, purchase_price, sale_price, stock, min_stock, 1 if is_active else 0, p['id']))
                     conn.commit()
                     conn.close()
                     st.session_state.editing_product = None
@@ -1400,7 +1279,7 @@ def render_admin_produtos():
             with col2:
                 if st.form_submit_button("Excluir", use_container_width=True):
                     conn = get_db()
-                    conn.execute("DELETE FROM products WHERE id = ?", (product['id'],))
+                    conn.execute("DELETE FROM products WHERE id=?", (p['id'],))
                     conn.commit()
                     conn.close()
                     st.session_state.editing_product = None
@@ -1439,7 +1318,6 @@ def render_admin_financeiro():
     conn.close()
     
     if records:
-        # Resumo
         total_income = sum(r['amount'] for r in records if r['type'] == 'income' and r['status'] == 'paid')
         total_expense = sum(r['amount'] for r in records if r['type'] == 'expense' and r['status'] == 'paid')
         
@@ -1473,7 +1351,7 @@ def render_admin_financeiro():
     else:
         st.info("Nenhum registro financeiro")
     
-    # Modal de receita
+    # Formulário de receita
     if st.session_state.get('show_income_form', False):
         with st.form("income_form"):
             st.subheader("Nova Receita")
@@ -1499,7 +1377,7 @@ def render_admin_financeiro():
                     st.session_state.show_income_form = False
                     st.rerun()
     
-    # Modal de despesa
+    # Formulário de despesa
     if st.session_state.get('show_expense_form', False):
         with st.form("expense_form"):
             st.subheader("Nova Despesa")
@@ -1555,7 +1433,7 @@ def render_admin_mensagens():
     else:
         st.info("Nenhuma mensagem cadastrada")
     
-    # Modal de criação
+    # Formulário de criação
     if st.session_state.get('show_message_form', False):
         with st.form("message_form"):
             st.subheader("Nova Mensagem")
@@ -1581,25 +1459,25 @@ def render_admin_mensagens():
                     st.session_state.show_message_form = False
                     st.rerun()
     
-    # Modal de edição
+    # Formulário de edição
     if st.session_state.get('editing_message'):
-        msg = st.session_state.editing_message
+        m = st.session_state.editing_message
         with st.form("edit_message_form"):
-            st.subheader(f"Editando: {msg['title']}")
-            title = st.text_input("Título", value=msg['title'])
-            category = st.selectbox("Categoria", ["confirmacao", "lembrete", "cancelamento", "aniversario", "promocao"], index=["confirmacao", "lembrete", "cancelamento", "aniversario", "promocao"].index(msg['category']))
-            content = st.text_area("Conteúdo", value=msg['content'])
-            is_active = st.checkbox("Ativa", value=bool(msg['is_active']))
+            st.subheader(f"Editando: {m['title']}")
+            title = st.text_input("Título", value=m['title'])
+            category = st.selectbox("Categoria", ["confirmacao", "lembrete", "cancelamento", "aniversario", "promocao"], 
+                                   index=["confirmacao", "lembrete", "cancelamento", "aniversario", "promocao"].index(m['category']))
+            content = st.text_area("Conteúdo", value=m['content'])
+            is_active = st.checkbox("Ativa", value=bool(m['is_active']))
             
             col1, col2, col3 = st.columns(3)
             with col1:
                 if st.form_submit_button("Salvar", use_container_width=True):
                     conn = get_db()
                     conn.execute("""
-                        UPDATE messages 
-                        SET title = ?, content = ?, category = ?, is_active = ?
-                        WHERE id = ?
-                    """, (title, content, category, 1 if is_active else 0, msg['id']))
+                        UPDATE messages SET title=?, content=?, category=?, is_active=?
+                        WHERE id=?
+                    """, (title, content, category, 1 if is_active else 0, m['id']))
                     conn.commit()
                     conn.close()
                     st.session_state.editing_message = None
@@ -1607,7 +1485,7 @@ def render_admin_mensagens():
             with col2:
                 if st.form_submit_button("Excluir", use_container_width=True):
                     conn = get_db()
-                    conn.execute("DELETE FROM messages WHERE id = ?", (msg['id'],))
+                    conn.execute("DELETE FROM messages WHERE id=?", (m['id'],))
                     conn.commit()
                     conn.close()
                     st.session_state.editing_message = None
@@ -1621,7 +1499,7 @@ def render_admin_configuracoes():
     st.title("⚙️ Configurações")
     
     conn = get_db()
-    prof = conn.execute("SELECT work_hours, appointment_settings, payment_settings, notification_settings FROM professionals WHERE id = ?", (st.session_state.user_id,)).fetchone()
+    prof = conn.execute("SELECT work_hours, appointment_settings FROM professionals WHERE id = ?", (st.session_state.user_id,)).fetchone()
     conn.close()
     
     work_hours = json.loads(prof['work_hours']) if prof and prof['work_hours'] else {}
@@ -1636,7 +1514,7 @@ def render_admin_configuracoes():
     
     for i, day in enumerate(days):
         with st.container():
-            col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+            col1, col2, col3 = st.columns([1, 1, 1])
             with col1:
                 enabled = st.checkbox(day_names[i], value=work_hours.get(day, {}).get('enabled', i < 5), key=f"enabled_{day}")
             with col2:
@@ -1669,9 +1547,7 @@ def render_admin_configuracoes():
     if st.button("Salvar Configurações", use_container_width=True):
         conn = get_db()
         conn.execute("""
-            UPDATE professionals 
-            SET work_hours = ?, appointment_settings = ?
-            WHERE id = ?
+            UPDATE professionals SET work_hours = ?, appointment_settings = ? WHERE id = ?
         """, (json.dumps(updated_hours), json.dumps(updated_settings), st.session_state.user_id))
         conn.commit()
         conn.close()
@@ -1682,14 +1558,11 @@ def render_admin_configuracoes():
 # MAIN
 # ============================================
 def main():
-    # Inicializar banco de dados
     init_db()
     
-    # Determinar view
     if 'view' not in st.session_state:
         st.session_state.view = 'booking'
     
-    # Verificar autenticação
     if st.session_state.view == 'admin':
         if not check_auth():
             login()
