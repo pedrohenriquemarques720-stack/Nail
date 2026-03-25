@@ -1,4 +1,4 @@
-# app.py - Versão Streamlit Completa (sem Plotly)
+# app.py - Versão Streamlit Completa (sem dependências externas)
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -6,8 +6,6 @@ from datetime import datetime, timedelta
 import hashlib
 import uuid
 import json
-import base64
-from streamlit_option_menu import option_menu
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -39,6 +37,34 @@ st.markdown("""
         color: white;
     }
     
+    /* Menu lateral personalizado */
+    .custom-sidebar {
+        background-color: white;
+        border-radius: 12px;
+        padding: 8px;
+        margin-bottom: 16px;
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        margin: 4px 0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #4b5563;
+    }
+    .nav-item:hover {
+        background-color: #fef2f6;
+        color: #E91E63;
+    }
+    .nav-item.active {
+        background-color: #fef2f6;
+        color: #E91E63;
+        border-left: 3px solid #E91E63;
+    }
+    
     /* Cards */
     .metric-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -51,11 +77,6 @@ st.markdown("""
     /* Títulos */
     h1, h2, h3 {
         color: #1a1a2e;
-    }
-    
-    /* Sidebar */
-    .css-1d391kg {
-        background-color: white;
     }
     
     /* Badges */
@@ -116,6 +137,21 @@ st.markdown("""
     .service-item:hover {
         border-color: #E91E63;
         box-shadow: 0 2px 8px rgba(233,30,99,0.1);
+    }
+    
+    /* Menu superior para mobile */
+    @media (max-width: 768px) {
+        .desktop-menu {
+            display: none;
+        }
+        .mobile-menu {
+            display: block;
+        }
+    }
+    @media (min-width: 769px) {
+        .mobile-menu {
+            display: none;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -560,7 +596,7 @@ def create_pie_chart(data, labels, title):
     
     # Criar um gráfico de pizza simples usando CSS
     pie_chart = f"""
-    <div style="display: flex; gap: 20px; align-items: center;">
+    <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
         <div style="width: 120px; height: 120px; border-radius: 50%; background: conic-gradient({', '.join([f'{colors[i % len(colors)]} 0% {sum(data[:i+1])/total*100}%' for i in range(len(data))])});">
         </div>
         <div style="flex: 1;">
@@ -585,6 +621,7 @@ def check_auth():
         st.session_state.user_id = None
         st.session_state.user_name = None
         st.session_state.view = 'booking'
+        st.session_state.admin_tab = 'dashboard'
     
     return st.session_state.authenticated
 
@@ -911,6 +948,43 @@ def render_booking_widget(prof):
             st.rerun()
 
 # ============================================
+# MENU ADMINISTRATIVO MANUAL
+# ============================================
+def render_admin_menu():
+    """Menu administrativo personalizado sem bibliotecas externas"""
+    
+    menu_items = {
+        "dashboard": {"icon": "📊", "label": "Dashboard"},
+        "agenda": {"icon": "📅", "label": "Agenda"},
+        "clientes": {"icon": "👥", "label": "Clientes"},
+        "servicos": {"icon": "💅", "label": "Serviços"},
+        "produtos": {"icon": "🛍️", "label": "Produtos"},
+        "financeiro": {"icon": "💰", "label": "Financeiro"},
+        "mensagens": {"icon": "💬", "label": "Mensagens"},
+        "configuracoes": {"icon": "⚙️", "label": "Configurações"}
+    }
+    
+    st.sidebar.markdown("### Menu Principal")
+    
+    for key, item in menu_items.items():
+        is_active = st.session_state.admin_tab == key
+        button_label = f"{item['icon']} {item['label']}"
+        
+        if st.sidebar.button(
+            button_label, 
+            key=f"menu_{key}",
+            use_container_width=True,
+            type="primary" if is_active else "secondary"
+        ):
+            st.session_state.admin_tab = key
+            st.rerun()
+    
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Sair", use_container_width=True):
+        logout()
+        st.rerun()
+
+# ============================================
 # PÁGINA ADMINISTRATIVA
 # ============================================
 def render_admin_page():
@@ -919,42 +993,24 @@ def render_admin_page():
         st.image("https://via.placeholder.com/150x150?text=💅", width=100)
         st.markdown(f"### Olá, {st.session_state.user_name}!")
         st.markdown("---")
-        
-        selected = option_menu(
-            menu_title="Menu Principal",
-            options=["Dashboard", "Agenda", "Clientes", "Serviços", "Produtos", "Financeiro", "Mensagens", "Configurações"],
-            icons=["graph-up", "calendar3", "people", "scissors", "box", "cash-stack", "envelope", "gear"],
-            menu_icon="list",
-            default_index=0,
-            styles={
-                "container": {"padding": "0!important", "background-color": "#fafafa"},
-                "icon": {"color": "#E91E63", "font-size": "18px"},
-                "nav-link": {"font-size": "14px", "text-align": "left", "margin": "0px", "--hover-color": "#fef2f6"},
-                "nav-link-selected": {"background-color": "#E91E63"},
-            }
-        )
-        
-        st.markdown("---")
-        if st.button("🚪 Sair", use_container_width=True):
-            logout()
-            st.rerun()
+        render_admin_menu()
     
     # Renderizar conteúdo baseado no menu selecionado
-    if selected == "Dashboard":
+    if st.session_state.admin_tab == "dashboard":
         render_admin_dashboard()
-    elif selected == "Agenda":
+    elif st.session_state.admin_tab == "agenda":
         render_admin_agenda()
-    elif selected == "Clientes":
+    elif st.session_state.admin_tab == "clientes":
         render_admin_clientes()
-    elif selected == "Serviços":
+    elif st.session_state.admin_tab == "servicos":
         render_admin_servicos()
-    elif selected == "Produtos":
+    elif st.session_state.admin_tab == "produtos":
         render_admin_produtos()
-    elif selected == "Financeiro":
+    elif st.session_state.admin_tab == "financeiro":
         render_admin_financeiro()
-    elif selected == "Mensagens":
+    elif st.session_state.admin_tab == "mensagens":
         render_admin_mensagens()
-    elif selected == "Configurações":
+    elif st.session_state.admin_tab == "configuracoes":
         render_admin_configuracoes()
 
 def render_admin_dashboard():
