@@ -1,13 +1,12 @@
-# app.py - Versão Streamlit Completa
+# app.py - Versão Streamlit Completa (sem Plotly)
 import streamlit as st
 import sqlite3
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import hashlib
 import uuid
 import json
+import base64
 from streamlit_option_menu import option_menu
 import warnings
 warnings.filterwarnings('ignore')
@@ -83,6 +82,40 @@ st.markdown("""
         border-radius: 20px;
         font-size: 12px;
         display: inline-block;
+    }
+    
+    /* Gráficos personalizados */
+    .progress-bar {
+        height: 8px;
+        background-color: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 8px 0;
+    }
+    .progress-fill {
+        height: 100%;
+        background-color: #E91E63;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 16px;
+    }
+    .service-item {
+        background: white;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s;
+    }
+    .service-item:hover {
+        border-color: #E91E63;
+        box-shadow: 0 2px 8px rgba(233,30,99,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -483,6 +516,65 @@ def get_status_badge(status):
         'no_show': '<span class="badge-warning">😞 Não compareceu</span>'
     }
     return badges.get(status, status)
+
+def create_bar_chart(data, labels, title):
+    """Cria um gráfico de barras usando HTML/CSS"""
+    max_value = max(data) if data else 1
+    bars_html = ""
+    for i, value in enumerate(data):
+        percentage = (value / max_value * 100) if max_value > 0 else 0
+        bars_html += f"""
+        <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-size: 12px;">{labels[i]}</span>
+                <span style="font-size: 12px; font-weight: bold;">{format_currency(value)}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {percentage}%;"></div>
+            </div>
+        </div>
+        """
+    
+    return f"""
+    <div class="stat-card">
+        <h4 style="margin-bottom: 16px;">{title}</h4>
+        {bars_html}
+    </div>
+    """
+
+def create_pie_chart(data, labels, title):
+    """Cria um gráfico de pizza usando HTML/CSS"""
+    total = sum(data) if data else 1
+    colors = ['#E91E63', '#FF4081', '#F50057', '#FF80AB', '#FFB7C5', '#FFC0CB']
+    items_html = ""
+    for i, value in enumerate(data):
+        percentage = (value / total * 100) if total > 0 else 0
+        color = colors[i % len(colors)]
+        items_html += f"""
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <div style="width: 12px; height: 12px; background-color: {color}; border-radius: 2px; margin-right: 8px;"></div>
+            <span style="flex: 1; font-size: 12px;">{labels[i]}</span>
+            <span style="font-size: 12px; font-weight: bold;">{percentage:.1f}%</span>
+        </div>
+        """
+    
+    # Criar um gráfico de pizza simples usando CSS
+    pie_chart = f"""
+    <div style="display: flex; gap: 20px; align-items: center;">
+        <div style="width: 120px; height: 120px; border-radius: 50%; background: conic-gradient({', '.join([f'{colors[i % len(colors)]} 0% {sum(data[:i+1])/total*100}%' for i in range(len(data))])});">
+        </div>
+        <div style="flex: 1;">
+            {items_html}
+        </div>
+    </div>
+    """
+    
+    return f"""
+    <div class="stat-card">
+        <h4 style="margin-bottom: 16px;">{title}</h4>
+        {pie_chart}
+    </div>
+    """
 
 # ============================================
 # AUTENTICAÇÃO
@@ -889,13 +981,13 @@ def render_admin_dashboard():
         st.metric("Lucro Líquido", format_currency(profit))
     
     # Atendimentos
-    appointments = conn.execute("SELECT COUNT(*) FROM appointments WHERE professional_id = ? AND status = 'completed'", (st.session_state.user_id,)).fetchone()[0]
+    appointments_count = conn.execute("SELECT COUNT(*) FROM appointments WHERE professional_id = ? AND status = 'completed'", (st.session_state.user_id,)).fetchone()[0]
     with col4:
-        st.metric("Atendimentos", appointments)
+        st.metric("Atendimentos", appointments_count)
     
     st.markdown("---")
     
-    # Gráficos
+    # Gráficos usando CSS puro
     col1, col2 = st.columns(2)
     
     with col1:
@@ -911,9 +1003,9 @@ def render_admin_dashboard():
         """, (st.session_state.user_id,)).fetchall()
         
         if top_services:
-            df = pd.DataFrame(top_services, columns=['Serviço', 'Qtd', 'Receita'])
-            fig = px.bar(df, x='Serviço', y='Receita', title='Receita por Serviço', color='Receita', color_continuous_scale='pinkyl')
-            st.plotly_chart(fig, use_container_width=True)
+            services_names = [s['name'] for s in top_services]
+            services_revenue = [s['revenue'] for s in top_services]
+            st.markdown(create_bar_chart(services_revenue, services_names, "Receita por Serviço"), unsafe_allow_html=True)
         else:
             st.info("Nenhum dado disponível")
     
@@ -927,9 +1019,9 @@ def render_admin_dashboard():
         """, (st.session_state.user_id,)).fetchall()
         
         if payments:
-            df = pd.DataFrame(payments, columns=['Método', 'Qtd', 'Total'])
-            fig = px.pie(df, values='Total', names='Método', title='Distribuição de Pagamentos')
-            st.plotly_chart(fig, use_container_width=True)
+            payment_methods = [p['payment_method'] for p in payments]
+            payment_totals = [p['total'] for p in payments]
+            st.markdown(create_pie_chart(payment_totals, payment_methods, "Distribuição de Pagamentos"), unsafe_allow_html=True)
         else:
             st.info("Nenhum dado disponível")
     
@@ -1220,6 +1312,47 @@ def render_admin_produtos():
                 if st.form_submit_button("Cancelar", use_container_width=True):
                     st.session_state.show_product_form = False
                     st.rerun()
+    
+    # Modal de edição
+    if st.session_state.get('editing_product'):
+        product = st.session_state.editing_product
+        with st.form("edit_product_form"):
+            st.subheader(f"Editando: {product['name']}")
+            name = st.text_input("Nome", value=product['name'])
+            description = st.text_area("Descrição", value=product['description'] or "")
+            sku = st.text_input("SKU", value=product['sku'] or "")
+            category = st.selectbox("Categoria", ["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"], index=["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"].index(product['category']) if product['category'] in ["Esmaltes", "Finalizadores", "Bases", "Cuidados", "Outros"] else 0)
+            purchase_price = st.number_input("Preço de Compra", min_value=0.0, value=product['purchase_price'])
+            sale_price = st.number_input("Preço de Venda", min_value=0.0, value=product['sale_price'])
+            stock = st.number_input("Quantidade em Estoque", min_value=0, value=product['stock_quantity'])
+            min_stock = st.number_input("Estoque Mínimo", min_value=0, value=product['min_stock_quantity'])
+            is_active = st.checkbox("Ativo", value=bool(product['is_active']))
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.form_submit_button("Salvar", use_container_width=True):
+                    conn = get_db()
+                    conn.execute("""
+                        UPDATE products 
+                        SET name = ?, description = ?, sku = ?, category = ?, purchase_price = ?, sale_price = ?, stock_quantity = ?, min_stock_quantity = ?, is_active = ?
+                        WHERE id = ?
+                    """, (name, description, sku, category, purchase_price, sale_price, stock, min_stock, 1 if is_active else 0, product['id']))
+                    conn.commit()
+                    conn.close()
+                    st.session_state.editing_product = None
+                    st.rerun()
+            with col2:
+                if st.form_submit_button("Excluir", use_container_width=True):
+                    conn = get_db()
+                    conn.execute("DELETE FROM products WHERE id = ?", (product['id'],))
+                    conn.commit()
+                    conn.close()
+                    st.session_state.editing_product = None
+                    st.rerun()
+            with col3:
+                if st.form_submit_button("Cancelar", use_container_width=True):
+                    st.session_state.editing_product = None
+                    st.rerun()
 
 def render_admin_financeiro():
     st.title("💰 Financeiro")
@@ -1250,6 +1383,20 @@ def render_admin_financeiro():
     conn.close()
     
     if records:
+        # Resumo
+        total_income = sum(r['amount'] for r in records if r['type'] == 'income' and r['status'] == 'paid')
+        total_expense = sum(r['amount'] for r in records if r['type'] == 'expense' and r['status'] == 'paid')
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Receitas", format_currency(total_income))
+        with col2:
+            st.metric("Total Despesas", format_currency(total_expense))
+        with col3:
+            st.metric("Saldo", format_currency(total_income - total_expense))
+        
+        st.markdown("---")
+        
         for record in records:
             with st.container():
                 col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 1, 1])
@@ -1376,6 +1523,42 @@ def render_admin_mensagens():
             with col2:
                 if st.form_submit_button("Cancelar", use_container_width=True):
                     st.session_state.show_message_form = False
+                    st.rerun()
+    
+    # Modal de edição
+    if st.session_state.get('editing_message'):
+        msg = st.session_state.editing_message
+        with st.form("edit_message_form"):
+            st.subheader(f"Editando: {msg['title']}")
+            title = st.text_input("Título", value=msg['title'])
+            category = st.selectbox("Categoria", ["confirmacao", "lembrete", "cancelamento", "aniversario", "promocao"], index=["confirmacao", "lembrete", "cancelamento", "aniversario", "promocao"].index(msg['category']))
+            content = st.text_area("Conteúdo", value=msg['content'])
+            is_active = st.checkbox("Ativa", value=bool(msg['is_active']))
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.form_submit_button("Salvar", use_container_width=True):
+                    conn = get_db()
+                    conn.execute("""
+                        UPDATE messages 
+                        SET title = ?, content = ?, category = ?, is_active = ?
+                        WHERE id = ?
+                    """, (title, content, category, 1 if is_active else 0, msg['id']))
+                    conn.commit()
+                    conn.close()
+                    st.session_state.editing_message = None
+                    st.rerun()
+            with col2:
+                if st.form_submit_button("Excluir", use_container_width=True):
+                    conn = get_db()
+                    conn.execute("DELETE FROM messages WHERE id = ?", (msg['id'],))
+                    conn.commit()
+                    conn.close()
+                    st.session_state.editing_message = None
+                    st.rerun()
+            with col3:
+                if st.form_submit_button("Cancelar", use_container_width=True):
+                    st.session_state.editing_message = None
                     st.rerun()
 
 def render_admin_configuracoes():
