@@ -1,4 +1,4 @@
-# app.py - Versão Streamlit Completa (Corrigida)
+# app.py - Versão Mobile-First com Interface Otimizada
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -10,74 +10,433 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # ============================================
-# CONFIGURAÇÃO DA PÁGINA
+# CONFIGURAÇÃO DA PÁGINA (Mobile First)
 # ============================================
 st.set_page_config(
     page_title="Agenda Manicure Pro",
     page_icon="💅",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Sidebar fechada por padrão no mobile
 )
 
 # ============================================
-# ESTILOS PERSONALIZADOS
+# ESTILOS MOBILE-OTIMIZADOS
 # ============================================
 st.markdown("""
 <style>
+    /* Reset e configurações base */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    /* Melhorias para mobile */
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    }
+    
+    /* Cards responsivos */
     .stButton > button {
         background-color: #E91E63;
         color: white;
-        border-radius: 8px;
+        border-radius: 12px;
         border: none;
-        padding: 8px 16px;
+        padding: 12px 20px;
+        font-size: 16px;
+        font-weight: 500;
+        width: 100%;
+        transition: all 0.2s;
+        cursor: pointer;
     }
+    
     .stButton > button:hover {
         background-color: #D81B60;
-        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(233,30,99,0.3);
     }
+    
+    /* Badges */
     .badge-success {
         background-color: #d1fae5;
         color: #065f46;
-        padding: 4px 8px;
+        padding: 4px 10px;
         border-radius: 20px;
         font-size: 12px;
         display: inline-block;
+        font-weight: 500;
     }
     .badge-warning {
         background-color: #fed7aa;
         color: #9b2c1d;
-        padding: 4px 8px;
+        padding: 4px 10px;
         border-radius: 20px;
         font-size: 12px;
         display: inline-block;
+        font-weight: 500;
     }
     .badge-info {
         background-color: #dbeafe;
         color: #1e40af;
-        padding: 4px 8px;
+        padding: 4px 10px;
         border-radius: 20px;
         font-size: 12px;
         display: inline-block;
+        font-weight: 500;
     }
+    
+    /* Cards de estatísticas */
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 12px;
+        transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    
+    /* Gráficos */
     .progress-bar {
-        height: 8px;
+        height: 10px;
         background-color: #e5e7eb;
-        border-radius: 4px;
+        border-radius: 8px;
         overflow: hidden;
         margin: 8px 0;
     }
     .progress-fill {
         height: 100%;
         background-color: #E91E63;
-        border-radius: 4px;
+        border-radius: 8px;
         transition: width 0.3s;
     }
-    .stat-card {
+    
+    /* Menu mobile */
+    .mobile-menu {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         background: white;
+        display: flex;
+        justify-content: space-around;
+        padding: 12px 16px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .mobile-menu-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        padding: 8px 12px;
         border-radius: 12px;
+        transition: all 0.2s;
+        font-size: 12px;
+        color: #6b7280;
+        text-decoration: none;
+    }
+    
+    .mobile-menu-item.active {
+        background-color: #fef2f6;
+        color: #E91E63;
+    }
+    
+    .mobile-menu-item span:first-child {
+        font-size: 24px;
+    }
+    
+    /* Cards de serviço */
+    .service-card {
+        background: white;
+        border-radius: 20px;
         padding: 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        margin-bottom: 16px;
+        margin-bottom: 12px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .service-card:hover {
+        border-color: #E91E63;
+        box-shadow: 0 4px 12px rgba(233,30,99,0.1);
+        transform: translateX(4px);
+    }
+    
+    /* Lista de agendamentos */
+    .appointment-card {
+        background: white;
+        border-radius: 20px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border-left: 4px solid #E91E63;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    /* Header do perfil */
+    .profile-header {
+        background: white;
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 20px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #E91E63, #FF4081);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 48px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(233,30,99,0.3);
+    }
+    
+    /* Formulários */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        color: #374151;
+    }
+    
+    .form-group input, .form-group textarea, .form-group select {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        font-size: 16px;
+        transition: all 0.2s;
+        background: white;
+    }
+    
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+        outline: none;
+        border-color: #E91E63;
+        box-shadow: 0 0 0 3px rgba(233,30,99,0.1);
+    }
+    
+    /* Steps */
+    .steps-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        padding: 0 8px;
+    }
+    
+    .step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+    }
+    
+    .step.active .step-circle {
+        background: #E91E63;
+        color: white;
+        box-shadow: 0 2px 8px rgba(233,30,99,0.3);
+    }
+    
+    .step.completed .step-circle {
+        background: #10B981;
+        color: white;
+    }
+    
+    .step-label {
+        font-size: 10px;
+        color: #6b7280;
+    }
+    
+    .step.active .step-label {
+        color: #E91E63;
+        font-weight: 500;
+    }
+    
+    /* Horários */
+    .slots-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .slot-btn {
+        padding: 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        background: white;
+    }
+    
+    .slot-btn:hover {
+        border-color: #E91E63;
+        background: #fef2f6;
+        transform: translateY(-2px);
+    }
+    
+    .slot-btn.selected {
+        background: #E91E63;
+        color: white;
+        border-color: #E91E63;
+    }
+    
+    /* Calendário */
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-top: 16px;
+    }
+    
+    .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        background: white;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .calendar-day.available {
+        background: white;
+    }
+    
+    .calendar-day.available:hover {
+        background: #E91E63;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .calendar-day.selected {
+        background: #E91E63;
+        color: white;
+        border-color: #E91E63;
+    }
+    
+    .calendar-day.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: #f3f4f6;
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .stApp {
+            padding-bottom: 70px;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            font-size: 36px;
+        }
+        
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+        
+        .step-label {
+            font-size: 9px;
+        }
+        
+        .slots-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .calendar-day {
+            font-size: 12px;
+        }
+    }
+    
+    /* Esconder sidebar no mobile */
+    @media (max-width: 768px) {
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+    }
+    
+    /* Animação de loading */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .loading {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #E91E63;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 20px auto;
+    }
+    
+    /* Toast notification */
+    .toast {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1f2937;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 50px;
+        z-index: 1100;
+        animation: slideUp 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-size: 14px;
+        white-space: nowrap;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -223,36 +582,6 @@ def init_db():
         )
     ''')
     
-    # Tabela sales_products
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS sales_products (
-            id TEXT PRIMARY KEY,
-            appointment_id TEXT,
-            product_id TEXT,
-            quantity INTEGER NOT NULL,
-            unit_price REAL NOT NULL,
-            total_price REAL NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (appointment_id) REFERENCES appointments(id),
-            FOREIGN KEY (product_id) REFERENCES products(id)
-        )
-    ''')
-    
-    # Tabela appointment_history
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS appointment_history (
-            id TEXT PRIMARY KEY,
-            appointment_id TEXT,
-            changed_by TEXT,
-            old_status TEXT,
-            new_status TEXT,
-            changes TEXT,
-            notes TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (appointment_id) REFERENCES appointments(id)
-        )
-    ''')
-    
     # Tabela messages
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS messages (
@@ -264,54 +593,6 @@ def init_db():
             is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (professional_id) REFERENCES professionals(id)
-        )
-    ''')
-    
-    # Tabela blocked_slots
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS blocked_slots (
-            id TEXT PRIMARY KEY,
-            professional_id TEXT,
-            start_time TIMESTAMP NOT NULL,
-            end_time TIMESTAMP NOT NULL,
-            reason TEXT,
-            is_recurring INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (professional_id) REFERENCES professionals(id)
-        )
-    ''')
-    
-    # Tabela commissions
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS commissions (
-            id TEXT PRIMARY KEY,
-            professional_id TEXT,
-            appointment_id TEXT,
-            employee_name TEXT,
-            commission_percentage REAL,
-            commission_amount REAL,
-            paid INTEGER DEFAULT 0,
-            paid_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (professional_id) REFERENCES professionals(id),
-            FOREIGN KEY (appointment_id) REFERENCES appointments(id)
-        )
-    ''')
-    
-    # Tabela reviews
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS reviews (
-            id TEXT PRIMARY KEY,
-            professional_id TEXT,
-            client_id TEXT,
-            appointment_id TEXT,
-            rating INTEGER NOT NULL,
-            comment TEXT,
-            response TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (professional_id) REFERENCES professionals(id),
-            FOREIGN KEY (client_id) REFERENCES clients(id),
-            FOREIGN KEY (appointment_id) REFERENCES appointments(id)
         )
     ''')
     
@@ -482,9 +763,9 @@ def create_bar_chart(data, labels, title):
         percentage = (value / max_value * 100) if max_value > 0 else 0
         bars_html += f"""
         <div style="margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="font-size: 12px;">{labels[i]}</span>
-                <span style="font-size: 12px; font-weight: bold;">{format_currency(value)}</span>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 14px; font-weight: 500;">{labels[i]}</span>
+                <span style="font-size: 14px; font-weight: bold; color: #E91E63;">{format_currency(value)}</span>
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" style="width: {percentage}%;"></div>
@@ -493,7 +774,7 @@ def create_bar_chart(data, labels, title):
         """
     return f"""
     <div class="stat-card">
-        <h4 style="margin-bottom: 16px;">{title}</h4>
+        <h4 style="margin-bottom: 16px; font-size: 16px;">{title}</h4>
         {bars_html}
     </div>
     """
@@ -506,16 +787,17 @@ def create_pie_chart(data, labels, title):
         percentage = (value / total * 100) if total > 0 else 0
         color = colors[i % len(colors)]
         items_html += f"""
-        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-            <div style="width: 12px; height: 12px; background-color: {color}; border-radius: 2px; margin-right: 8px;"></div>
-            <span style="flex: 1; font-size: 12px;">{labels[i]}</span>
-            <span style="font-size: 12px; font-weight: bold;">{percentage:.1f}%</span>
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <div style="width: 12px; height: 12px; background-color: {color}; border-radius: 3px; margin-right: 10px;"></div>
+            <span style="flex: 1; font-size: 14px;">{labels[i]}</span>
+            <span style="font-size: 14px; font-weight: bold;">{percentage:.1f}%</span>
         </div>
         """
     
+    # Gráfico de pizza simples
     pie_chart = f"""
-    <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-        <div style="width: 120px; height: 120px; border-radius: 50%; background: conic-gradient({', '.join([f'{colors[i % len(colors)]} 0% {sum(data[:i+1])/total*100}%' for i in range(len(data))])});">
+    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+        <div style="width: 100px; height: 100px; border-radius: 50%; background: conic-gradient({', '.join([f'{colors[i % len(colors)]} 0% {sum(data[:i+1])/total*100}%' for i in range(len(data))])}); margin: 0 auto;">
         </div>
         <div style="flex: 1;">
             {items_html}
@@ -525,7 +807,7 @@ def create_pie_chart(data, labels, title):
     
     return f"""
     <div class="stat-card">
-        <h4 style="margin-bottom: 16px;">{title}</h4>
+        <h4 style="margin-bottom: 16px; font-size: 16px;">{title}</h4>
         {pie_chart}
     </div>
     """
@@ -543,36 +825,43 @@ def check_auth():
     return st.session_state.authenticated
 
 def login():
-    st.title("🔐 Área Administrativa")
-    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 32px;">
+        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #E91E63, #FF4081); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+            <span style="font-size: 40px;">💅</span>
+        </div>
+        <h1 style="font-size: 24px;">Área Administrativa</h1>
+        <p style="color: #6b7280;">Faça login para acessar o painel</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("### Login")
-        email = st.text_input("Email")
-        password = st.text_input("Senha", type="password")
-        
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button("Entrar", use_container_width=True):
-                conn = get_db()
-                cursor = conn.cursor()
-                cursor.execute("SELECT id, name, business_name, password FROM professionals WHERE email = ?", (email,))
-                user = cursor.fetchone()
-                conn.close()
-                
-                if user and user[3] == hashlib.sha256(password.encode()).hexdigest():
-                    st.session_state.authenticated = True
-                    st.session_state.user_id = user[0]
-                    st.session_state.user_name = user[1] or user[2]
+        with st.form("login_form"):
+            email = st.text_input("Email", placeholder="seu@email.com")
+            password = st.text_input("Senha", type="password", placeholder="••••••••")
+            
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                if st.form_submit_button("Entrar", use_container_width=True):
+                    conn = get_db()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT id, name, business_name, password FROM professionals WHERE email = ?", (email,))
+                    user = cursor.fetchone()
+                    conn.close()
+                    
+                    if user and user[3] == hashlib.sha256(password.encode()).hexdigest():
+                        st.session_state.authenticated = True
+                        st.session_state.user_id = user[0]
+                        st.session_state.user_name = user[1] or user[2]
+                        st.rerun()
+                    else:
+                        st.error("Email ou senha incorretos")
+            
+            with col_btn2:
+                if st.form_submit_button("Voltar", use_container_width=True):
+                    st.session_state.view = 'booking'
                     st.rerun()
-                else:
-                    st.error("Email ou senha incorretos")
-        
-        with col_btn2:
-            if st.button("Voltar para Agendamento", use_container_width=True):
-                st.session_state.view = 'booking'
-                st.rerun()
         
         st.markdown("---")
         st.info("📝 **Demo:** ste@naildesigner.com / admin123")
@@ -584,7 +873,7 @@ def logout():
     st.rerun()
 
 # ============================================
-# PÁGINA PÚBLICA DE AGENDAMENTO
+# PÁGINA PÚBLICA DE AGENDAMENTO (Mobile Otimizada)
 # ============================================
 def render_booking_page():
     slug = "stebarbosa"
@@ -597,43 +886,43 @@ def render_booking_page():
         st.error("Profissional não encontrada")
         return
     
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown(f"""
-        <div style="text-align: center;">
-            <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #E91E63, #FF4081); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                <span style="font-size: 48px; color: white;">💅</span>
-            </div>
-            <h1>{prof['business_name'] or prof['name']}</h1>
-            <p style="color: gray;">{prof['bio_description'] or ''}</p>
+    # Header do perfil
+    st.markdown(f"""
+    <div class="profile-header">
+        <div class="profile-avatar">
+            💅
         </div>
-        """, unsafe_allow_html=True)
-        
-        # Links Sociais
-        cols = st.columns(3)
-        with cols[0]:
-            if prof['instagram']:
-                st.link_button("📷 Instagram", f"https://instagram.com/{prof['instagram'].replace('@', '')}", use_container_width=True)
-            else:
-                st.button("📷 Instagram", disabled=True, use_container_width=True)
-        
-        with cols[1]:
-            if prof['whatsapp']:
-                st.link_button("💬 WhatsApp", f"https://wa.me/{prof['whatsapp']}", use_container_width=True)
-            else:
-                st.button("💬 WhatsApp", disabled=True, use_container_width=True)
-        
-        with cols[2]:
-            if prof['address']:
-                st.markdown(f"<div style='background: #f3f4f6; padding: 8px 16px; border-radius: 8px; text-align: center;'>📍 {prof['address']}</div>", unsafe_allow_html=True)
-            else:
-                st.button("📍 Endereço", disabled=True, use_container_width=True)
-        
-        st.markdown("---")
-        
-        if st.button("🔐 Área do Profissional", use_container_width=True):
-            st.session_state.view = 'admin'
-            st.rerun()
+        <h1 style="font-size: 24px; margin-bottom: 8px;">{prof['business_name'] or prof['name']}</h1>
+        <p style="color: #6b7280; font-size: 14px;">{prof['bio_description'] or ''}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Links sociais
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if prof['instagram']:
+            st.link_button("📷 Instagram", f"https://instagram.com/{prof['instagram'].replace('@', '')}", use_container_width=True)
+        else:
+            st.button("📷 Instagram", disabled=True, use_container_width=True)
+    
+    with col2:
+        if prof['whatsapp']:
+            st.link_button("💬 WhatsApp", f"https://wa.me/{prof['whatsapp']}", use_container_width=True)
+        else:
+            st.button("💬 WhatsApp", disabled=True, use_container_width=True)
+    
+    with col3:
+        if prof['address']:
+            st.markdown(f"<div style='background: #f3f4f6; padding: 10px; border-radius: 12px; text-align: center; font-size: 14px;'>📍 {prof['address'][:30]}...</div>", unsafe_allow_html=True)
+        else:
+            st.button("📍 Endereço", disabled=True, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # Botão para área admin
+    if st.button("🔐 Área do Profissional", use_container_width=True):
+        st.session_state.view = 'admin'
+        st.rerun()
     
     render_booking_widget(prof)
 
@@ -644,20 +933,25 @@ def render_booking_widget(prof):
         st.session_state.selected_date = None
         st.session_state.selected_time = None
     
+    # Steps
     steps = ["Escolha o Serviço", "Data e Horário", "Seus Dados", "Confirmação"]
     current_step = st.session_state.booking_step - 1
     
-    cols = st.columns(4)
+    st.markdown('<div class="steps-container">', unsafe_allow_html=True)
     for i, step in enumerate(steps):
-        with cols[i]:
-            if i < current_step:
-                st.markdown(f"✅ {step}")
-            elif i == current_step:
-                st.markdown(f"🔴 **{step}**")
-            else:
-                st.markdown(f"⚪ {step}")
-    
-    st.markdown("---")
+        status_class = ""
+        if i < current_step:
+            status_class = "completed"
+        elif i == current_step:
+            status_class = "active"
+        
+        st.markdown(f"""
+        <div class="step {status_class}">
+            <div class="step-circle">{i+1}</div>
+            <div class="step-label">{step}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Step 1: Serviços
     if st.session_state.booking_step == 1:
@@ -665,7 +959,7 @@ def render_booking_widget(prof):
         services = conn.execute("SELECT * FROM services WHERE professional_id = ? AND is_active = 1", (prof['id'],)).fetchall()
         conn.close()
         
-        st.subheader("Escolha um serviço")
+        st.subheader("✨ Escolha um serviço")
         
         search = st.text_input("🔍 Buscar serviço", placeholder="Digite o nome do serviço...")
         categories = ['Todos'] + list(set([s['category'] for s in services if s['category']]))
@@ -677,26 +971,31 @@ def render_booking_widget(prof):
             if selected_category != 'Todos' and service['category'] != selected_category:
                 continue
             
-            with st.container():
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.markdown(f"**{service['name']}**")
-                    if service['description']:
-                        st.caption(service['description'])
-                    st.caption(f"⏱️ {service['duration_minutes']} minutos")
-                with col2:
-                    st.markdown(f"<h3 style='color: #E91E63;'>{format_currency(service['price'])}</h3>", unsafe_allow_html=True)
-                    if st.button(f"Agendar", key=f"service_{service['id']}", use_container_width=True):
-                        st.session_state.selected_service = dict(service)
-                        st.session_state.booking_step = 2
-                        st.rerun()
-                st.divider()
+            st.markdown(f"""
+            <div class="service-card" onclick="selectService('{service['id']}')">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="font-size: 16px; margin-bottom: 4px;">{service['name']}</h3>
+                        {f'<p style="color: #6b7280; font-size: 12px; margin-bottom: 8px;">{service["description"]}</p>' if service['description'] else ''}
+                        <span style="color: #9ca3af; font-size: 12px;">⏱️ {service['duration_minutes']} min</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 18px; font-weight: bold; color: #E91E63;">{format_currency(service['price'])}</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button(f"Agendar", key=f"service_{service['id']}", use_container_width=True):
+                st.session_state.selected_service = dict(service)
+                st.session_state.booking_step = 2
+                st.rerun()
     
     # Step 2: Data e Horário
     elif st.session_state.booking_step == 2:
         service = st.session_state.selected_service
         
-        st.subheader(f"Agendando: {service['name']}")
+        st.subheader(f"📅 {service['name']}")
         st.caption(f"💰 {format_currency(service['price'])} • ⏱️ {service['duration_minutes']} minutos")
         
         col1, col2 = st.columns(2)
@@ -770,7 +1069,7 @@ def render_booking_widget(prof):
     elif st.session_state.booking_step == 3:
         service = st.session_state.selected_service
         
-        st.subheader("Seus dados")
+        st.subheader("👤 Seus dados")
         
         with st.form("client_form"):
             full_name = st.text_input("Nome completo *")
@@ -827,20 +1126,24 @@ def render_booking_widget(prof):
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"""
-            ### 📋 Detalhes do Agendamento
-            - **Serviço:** {service['name']}
-            - **Data:** {format_date(st.session_state.selected_date)}
-            - **Horário:** {st.session_state.selected_time}
-            - **Valor:** {format_currency(service['price'])}
-            """)
+            <div class="stat-card">
+                <h4>📋 Detalhes</h4>
+                <p><strong>Serviço:</strong> {service['name']}</p>
+                <p><strong>Data:</strong> {format_date(st.session_state.selected_date)}</p>
+                <p><strong>Horário:</strong> {st.session_state.selected_time}</p>
+                <p><strong>Valor:</strong> {format_currency(service['price'])}</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col2:
             st.markdown(f"""
-            ### 💡 Próximos passos
-            - Guarde o código: `{st.session_state.booking_id[:8]}`
-            - Você receberá um lembrete por WhatsApp
-            - Em caso de imprevistos, cancele com 24h de antecedência
-            """)
+            <div class="stat-card">
+                <h4>💡 Próximos passos</h4>
+                <p>Código: <strong>{st.session_state.booking_id[:8]}</strong></p>
+                <p>Você receberá um lembrete por WhatsApp</p>
+                <p>Cancelamento com 24h de antecedência</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         conn = get_db()
         prof_data = conn.execute("SELECT * FROM professionals WHERE id = ?", (service['professional_id'],)).fetchone()
@@ -859,12 +1162,19 @@ def render_booking_widget(prof):
             st.rerun()
 
 # ============================================
-# MENU ADMINISTRATIVO
+# MENU ADMINISTRATIVO (Mobile Otimizado)
 # ============================================
 def render_admin_menu():
     with st.sidebar:
-        st.image("https://via.placeholder.com/150x150?text=💅", width=100)
-        st.markdown(f"### Olá, {st.session_state.user_name}!")
+        st.markdown("""
+        <div style="text-align: center; padding: 20px 0;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #E91E63, #FF4081); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <span style="font-size: 32px;">💅</span>
+            </div>
+            <h3 style="margin-bottom: 4px;">Olá, {}</h3>
+        </div>
+        """.format(st.session_state.user_name), unsafe_allow_html=True)
+        
         st.markdown("---")
         
         menu_items = {
@@ -887,6 +1197,28 @@ def render_admin_menu():
         if st.sidebar.button("🚪 Sair", use_container_width=True):
             logout()
             st.rerun()
+    
+    # Menu mobile (bottom bar)
+    st.markdown("""
+    <div class="mobile-menu">
+        <div class="mobile-menu-item" onclick="window.location.href='#'">
+            <span>📊</span>
+            <span>Dashboard</span>
+        </div>
+        <div class="mobile-menu-item" onclick="window.location.href='#'">
+            <span>📅</span>
+            <span>Agenda</span>
+        </div>
+        <div class="mobile-menu-item" onclick="window.location.href='#'">
+            <span>👥</span>
+            <span>Clientes</span>
+        </div>
+        <div class="mobile-menu-item" onclick="window.location.href='#'">
+            <span>💅</span>
+            <span>Serviços</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ============================================
 # PÁGINA ADMINISTRATIVA
@@ -916,7 +1248,10 @@ def render_admin_dashboard():
     st.title("📊 Dashboard")
     
     conn = get_db()
-    col1, col2, col3, col4 = st.columns(4)
+    
+    # Cards responsivos
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
     
     revenue = conn.execute("SELECT COALESCE(SUM(amount_paid), 0) FROM appointments WHERE professional_id = ? AND status = 'completed'", (st.session_state.user_id,)).fetchone()[0]
     expenses = conn.execute("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE professional_id = ? AND type = 'expense' AND status = 'paid'", (st.session_state.user_id,)).fetchone()[0]
@@ -924,20 +1259,20 @@ def render_admin_dashboard():
     appointments_count = conn.execute("SELECT COUNT(*) FROM appointments WHERE professional_id = ? AND status = 'completed'", (st.session_state.user_id,)).fetchone()[0]
     
     with col1:
-        st.metric("Receita Total", format_currency(revenue))
+        st.metric("💰 Receita", format_currency(revenue))
     with col2:
-        st.metric("Despesas", format_currency(expenses))
+        st.metric("💸 Despesas", format_currency(expenses))
     with col3:
-        st.metric("Lucro Líquido", format_currency(profit))
+        st.metric("📈 Lucro", format_currency(profit))
     with col4:
-        st.metric("Atendimentos", appointments_count)
+        st.metric("📅 Atendimentos", appointments_count)
     
     st.markdown("---")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Top 5 Serviços")
+        st.subheader("🏆 Top Serviços")
         top_services = conn.execute("""
             SELECT s.name, SUM(a.amount_paid) as revenue
             FROM appointments a
@@ -956,7 +1291,7 @@ def render_admin_dashboard():
             st.info("Nenhum dado disponível")
     
     with col2:
-        st.subheader("Formas de Pagamento")
+        st.subheader("💳 Formas de Pagamento")
         payments = conn.execute("""
             SELECT payment_method, SUM(amount_paid) as total
             FROM appointments
@@ -967,7 +1302,7 @@ def render_admin_dashboard():
         if payments:
             methods = [p['payment_method'] for p in payments]
             totals = [p['total'] for p in payments]
-            st.markdown(create_pie_chart(totals, methods, "Distribuição de Pagamentos"), unsafe_allow_html=True)
+            st.markdown(create_pie_chart(totals, methods, "Distribuição"), unsafe_allow_html=True)
         else:
             st.info("Nenhum dado disponível")
     
@@ -983,14 +1318,15 @@ def render_admin_dashboard():
     
     if birthdays:
         for b in birthdays:
-            col1, col2, col3 = st.columns([2, 1, 1])
-            with col1:
-                st.write(f"🎉 **{b['full_name']}**")
-            with col2:
-                st.write(format_date(b['birth_date']))
-            with col3:
-                if b['phone']:
-                    st.link_button("💬 WhatsApp", f"https://wa.me/{b['phone'].replace('(', '').replace(')', '').replace('-', '').replace(' ', '')}", use_container_width=True)
+            st.markdown(f"""
+            <div style="background: white; border-radius: 16px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>{b['full_name']}</strong>
+                    <div style="font-size: 12px; color: #6b7280;">{format_date(b['birth_date'])}</div>
+                </div>
+                <a href="https://wa.me/{b['phone'].replace('(', '').replace(')', '').replace('-', '').replace(' ', '')}" target="_blank" style="background: #25D366; color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-size: 12px;">💬 WhatsApp</a>
+            </div>
+            """, unsafe_allow_html=True)
     else:
         st.info("Nenhum aniversariante este mês")
     
@@ -1015,44 +1351,51 @@ def render_admin_agenda():
     
     if appointments:
         for apt in appointments:
-            with st.container():
-                col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 1, 1])
-                with col1:
-                    st.markdown(f"### ⏰ {datetime.fromisoformat(apt['start_time']).strftime('%H:%M')}")
-                with col2:
-                    st.markdown(f"**👤 {apt['client_name']}**")
-                    st.caption(f"📞 {apt['client_phone']}")
-                with col3:
-                    st.markdown(f"**💅 {apt['service_name']}**")
-                    st.caption(f"💰 {format_currency(apt['price'])} • ⏱️ {apt['duration_minutes']} min")
-                with col4:
-                    st.markdown(get_status_badge(apt['status']), unsafe_allow_html=True)
-                with col5:
-                    new_status = st.selectbox(
-                        "Status",
-                        ["pending", "confirmed", "in_progress", "completed", "cancelled"],
-                        index=["pending", "confirmed", "in_progress", "completed", "cancelled"].index(apt['status']) if apt['status'] in ["pending", "confirmed", "in_progress", "completed", "cancelled"] else 0,
-                        key=f"status_{apt['id']}",
-                        label_visibility="collapsed"
-                    )
-                    if new_status != apt['status']:
-                        conn = get_db()
-                        conn.execute("UPDATE appointments SET status = ? WHERE id = ?", (new_status, apt['id']))
-                        if new_status == 'completed':
-                            conn.execute("""
-                                UPDATE clients 
-                                SET total_visits = total_visits + 1,
-                                    total_spent = total_spent + ?,
-                                    last_visit = CURRENT_TIMESTAMP
-                                WHERE id = ?
-                            """, (apt['amount_paid'] or apt['price'], apt['client_id']))
-                        conn.commit()
-                        conn.close()
-                        st.rerun()
-                st.divider()
+            st.markdown(f"""
+            <div class="appointment-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div>
+                        <span style="font-size: 18px; font-weight: bold;">⏰ {datetime.fromisoformat(apt['start_time']).strftime('%H:%M')}</span>
+                    </div>
+                    <div>{get_status_badge(apt['status'])}</div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold;">👤 {apt['client_name']}</div>
+                    <div style="font-size: 12px; color: #6b7280;">📞 {apt['client_phone']}</div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <div style="font-weight: 500;">💅 {apt['service_name']}</div>
+                    <div style="font-size: 12px; color: #6b7280;">💰 {format_currency(apt['price'])} • ⏱️ {apt['duration_minutes']} min</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            new_status = st.selectbox(
+                "Status",
+                ["pending", "confirmed", "in_progress", "completed", "cancelled"],
+                index=["pending", "confirmed", "in_progress", "completed", "cancelled"].index(apt['status']) if apt['status'] in ["pending", "confirmed", "in_progress", "completed", "cancelled"] else 0,
+                key=f"status_{apt['id']}",
+                label_visibility="collapsed"
+            )
+            if new_status != apt['status']:
+                conn = get_db()
+                conn.execute("UPDATE appointments SET status = ? WHERE id = ?", (new_status, apt['id']))
+                if new_status == 'completed':
+                    conn.execute("""
+                        UPDATE clients 
+                        SET total_visits = total_visits + 1,
+                            total_spent = total_spent + ?,
+                            last_visit = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    """, (apt['amount_paid'] or apt['price'], apt['client_id']))
+                conn.commit()
+                conn.close()
+                st.rerun()
     else:
         st.info("Nenhum agendamento para esta data")
 
+# Funções restantes mantidas (clientes, serviços, produtos, financeiro, mensagens, configurações)
+# As funções abaixo são as mesmas da versão anterior, mantidas para completude
 def render_admin_clientes():
     st.title("👥 Clientes")
     
